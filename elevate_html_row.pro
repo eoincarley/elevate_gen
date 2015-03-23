@@ -17,8 +17,11 @@ pro write_row, tstart, row_num
   template[19] = strmid(template[19], 0, ind_date+len) + time2file(tstart, /date_only)+'&type=xray")>'
   
   ; Edit NRH links
+   nrh_sun_ephemeris, tstart[i], $
+        nrh_tstart, nrh_tend
+  IF anytim(em_start[i], /utim) le nrh_tstart[0] or anytim(em_start[i], /utim) ge nrh_tend[0] THEN survey='4' else survey='1'
   ind_date = stregex(template[30], 'dayofyear=', length=len)   
-  template[30] = strmid(template[30], 0, ind_date+len) + time2file(tstart, /date_only)+'&survey_type=1")>'
+  template[30] = strmid(template[30], 0, ind_date+len) + time2file(tstart, /date_only)+'&survey_type='+survey+'")>'
   
   ;Edit CDAW lists
   ind_date = stregex(template[41], 'daily_movies/', length=len)   
@@ -77,15 +80,13 @@ pro elevate_html_row, fname, outname
   php_incl = strarr(n_elements(tstart))
   WHILE i lt n_elements(tstart)-1 DO BEGIN
     
-    nrh_sun_ephemeris, tstart[i], $
-        nrh_tstart, nrh_tend
-    IF anytim(em_start[i], /utim) ge nrh_tstart[0] and anytim(em_start[i], /utim) le nrh_tend[0] THEN BEGIN
+   
       print, anytim(nrh_tstart, /cc), anytim(nrh_tend, /cc)
       print, anytim(tstart[i], /cc)
       write_row, tstart[i], row_num
       php_incl[i] = "<?php include('soho-erne/row_"+string(row_num, format='(I03)')+ ".html'); ?>"
       row_num = row_num + 1
-    ENDIF 
+ 
      
     i=i+1
   ENDWHILE  
