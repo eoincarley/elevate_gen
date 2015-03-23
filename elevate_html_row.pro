@@ -1,34 +1,66 @@
-pro write_row, tstart, row_num
+pro write_row, tstart, em_start, row_num, folder
   
   template = rd_tfile('~/ELEVATE/website/row_template.html') 
   template = transpose(template)
-  
+
   ; Edit event_num
-  template[3] = string(row_num, format='(I03)')
-  
+  irow = where(strtrim(template,1) eq "<!--Row-->")
+  template[irow+1] = string(row_num, format='(I03)')
+
+
   ; Edit time row
+  irow = where(strtrim(template,1) eq "<!--Date-->")
   tstring = anytim(tstart, /ccsds, /date_only) +' <br> '+anytim(tstart, /ccsds, /time_only, /trun)
-  template[8] = tstring
-  
+  template[irow+1] = tstring
+
   ; Edit SM links
-  ind_date = stregex(template[13], 'date=', length=len)   
-  template[13] = strmid(template[13], 0, ind_date+len) + time2file(tstart, /date_only)+'")>'
-  ind_date = stregex(template[19], 'date=', length=len)   
-  template[19] = strmid(template[19], 0, ind_date+len) + time2file(tstart, /date_only)+'&type=xray")>'
+  irow = where(strtrim(template,1) eq "<!--Solmon-->")  
+  ind_date = stregex(template[irow+1], 'date=', length=len) 
+  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + time2file(tstart, /date_only)+'")>'
+
+  irow = where(strtrim(template,1) eq "<!--Goes-->")  
+  ind_date = stregex(template[irow+1], 'date=', length=len)   
+  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + time2file(tstart, /date_only)+'&type=xray")>'
   
-  ; Edit NRH links
-   nrh_sun_ephemeris, tstart[i], $
+  ; Edit Radio links
+    ; NANCAY Survey
+   nrh_sun_ephemeris, tstart, $
         nrh_tstart, nrh_tend
-  IF anytim(em_start[i], /utim) le nrh_tstart[0] or anytim(em_start[i], /utim) ge nrh_tend[0] THEN survey='4' else survey='1'
-  ind_date = stregex(template[30], 'dayofyear=', length=len)   
-  template[30] = strmid(template[30], 0, ind_date+len) + time2file(tstart, /date_only)+'&survey_type='+survey+'")>'
+  IF anytim(em_start, /utim) le nrh_tstart[0] or anytim(em_start, /utim) ge nrh_tend[0] THEN survey='4' else survey='1'
+  irow = where(strtrim(template,1) eq "<!--RadioBurst-->")  
+  ind_date = stregex(template[irow+1], 'dayofyear=', length=len)   
+  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + time2file(tstart, /date_only)+'&survey_type='+survey+'")>'
   
+    ; Learmonth Culgoora
+  lear_tstart = anytim('2001-01-01T21:30:00', /utim, /time_only)  
+  lear_tend = anytim('2001-01-01T10:30:00', /utim, /time_only)
+
+  IF anytim(em_start, /utim, /time_only) ge lear_tstart[0] or anytim(em_start, /utim, /time_only) le lear_tend[0] THEN BEGIN
+    date = time2file(tstart[0], /date_only)
+    YY = string(anytim(tstart[0], /hxrbs), format='(A03)')
+    irow = where(strtrim(template,1) eq "<!--Learmonth-->")  
+    ind_date = stregex(template[irow+1], 'images/', length=len)   
+    template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + YY + date + 'spectrograph.gif")>Learmonth</a><br>'
+  ENDIF 
+
+
+  culg_tstart = anytim('2001-01-01T20:00:00', /utim, /time_only)  
+  culg_tend = anytim('2001-01-01T08:30:00', /utim, /time_only)
+
+  IF anytim(em_start, /utim, /time_only) ge culg_tstart[0] or anytim(em_start, /utim, /time_only) le culg_tend[0] THEN BEGIN
+    date = time2file(tstart[0], /date_only)
+    YY = string(anytim(tstart[0], /hxrbs), format='(A03)')
+    irow = where(strtrim(template,1) eq "<!--Culgoora-->")  
+    ind_date = stregex(template[irow+1], 'images/', length=len)   
+    template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + YY + date + 'spectrograph.gif")>Culgoora</a><br>'
+  ENDIF
+
   ;Edit CDAW lists
-  ind_date = stregex(template[41], 'daily_movies/', length=len)   
-  template[41] = strmid(template[41], 0, ind_date+len) + anytim(tstart, /ecs, /date)+'/")>'
-  
-  
-  openw, 100, '~/ELEVATE/website/soho-erne/row_'+string(row_num, format='(I03)')+'.html'
+  irow = where(strtrim(template,1) eq "<!--CME-->")  
+  ind_date = stregex(template[irow+1], 'daily_movies/', length=len)   
+  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + anytim(tstart, /ecs, /date)+'/")>'
+
+  openw, 100, '~/ELEVATE/website/'+folder+'/row_'+string(row_num, format='(I03)')+'.html'
   printf, 100, template
   close, 100
 
@@ -53,7 +85,7 @@ pro nrh_sun_ephemeris, tstart, $
 END
 
 
-pro elevate_html_row, fname, outname
+pro elevate_html_row, fname, folder, outname
 
     ;Procedure to produce html rows for the ELEVATE catalogue.
     ;Input is the text file of times from SEPserver catalogues.
@@ -81,10 +113,10 @@ pro elevate_html_row, fname, outname
   WHILE i lt n_elements(tstart)-1 DO BEGIN
     
    
-      print, anytim(nrh_tstart, /cc), anytim(nrh_tend, /cc)
+     ; print, anytim(nrh_tstart, /cc), anytim(nrh_tend, /cc)
       print, anytim(tstart[i], /cc)
-      write_row, tstart[i], row_num
-      php_incl[i] = "<?php include('soho-erne/row_"+string(row_num, format='(I03)')+ ".html'); ?>"
+      write_row, tstart[i], em_start[i], row_num, folder
+      php_incl[i] = "<?php include("+folder+"/row_"+string(row_num, format='(I03)')+ ".html'); ?>"
       row_num = row_num + 1
  
      
