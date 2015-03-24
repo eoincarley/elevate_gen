@@ -1,4 +1,4 @@
-pro write_row, tstart, em_start, row_num, folder
+pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html
   
   template = rd_tfile('~/ELEVATE/website/row_template.html') 
   template = transpose(template)
@@ -66,6 +66,30 @@ pro write_row, tstart, em_start, row_num, folder
   ind_date = stregex(template[irow+1], 'daily_movies/', length=len)   
   template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + anytim(tstart, /ecs, /date)+'/")>'
 
+
+  ;-----------------------------------------------;
+  ;         Check for candidate wave
+  ;   Data from http://aia.lmsal.com/AIA_Waves/
+  ;   Define a two hour window around em_start time
+  wave_check_t0 = anytim(em_start, /utim) - 60.0*60.0
+  wave_check_t1 = anytim(em_start, /utim) + 60.0*60.0
+  wave_times = anytim(wave_times, /utim)
+  result = where(wave_times ge wave_check_t0 and wave_times le wave_check_t1)
+
+  irow = where(strtrim(template,1) eq "<!--EUV Wave-->")  
+  if result[0] ne -1 then begin
+      FOR k =0, n_elements(result)-1 DO BEGIN
+        wave_time = anytim(wave_times[result[k]], /cc, /time_only, /trun)+' UT'    ; For display online.
+        candidate_wave = (strsplit(wave_times_html[result[k]], '"', /extract))[1]
+        candidate_wave = (strsplit(candidate_wave, '..', /extract))[0]
+        lmsal_94_link = candidate_wave 
+        lmsal_211_link = STRJOIN(STRSPLIT(lmsal_94_link, 'aia_0094', /EXTRACT, /REGEX), 'aia_0211_rdiff')
+        lmsal_211_link = STRJOIN(STRSPLIT(lmsal_211_link, 'AIA_0094', /EXTRACT, /REGEX), 'AIA_0211_RDIFF')
+        ind_date = stregex(template[irow+1], 'aia.lmsal.com', length=len)   
+        template[irow+1] = template[irow+1] + strmid(template[irow+1], 0, ind_date+len) + lmsal_211_link + '.html")>'+wave_time+'</a><br>'
+      ENDFOR
+  endif
+
   openw, 100, '~/ELEVATE/website/'+folder+'/row_'+string(row_num, format='(I03)')+'.html'
   printf, 100, template
   close, 100
@@ -103,7 +127,8 @@ pro elevate_html_row, fname, folder, outname
   tonset = obs_tstart ;anytim(obs_tstart, /utim) + 0.25*24.0*3600.0  ;Onset is 0.25 days after obs start in catalogue
   em_start = anytim(tonset, /utim) - 60.0*60.0*2.0 ;Roughly, 55-80 MeV protons arrive ~1hr after first EM signatures.
   tstart = tonset
-      
+  
+  restore, 'lmsal_euv_wave_times.sav'
     ;Nancay observed for 7 hours of the day centered around the time when
     ;the Sun pases through the meridian at Nancay e.g., when the Sun
     ;has maximum elevation or minimum zenith
@@ -116,18 +141,17 @@ pro elevate_html_row, fname, folder, outname
   row_num = 1
   save_index = 0.0
   php_incl = strarr(n_elements(tstart))
-  WHILE i lt n_elements(tstart)-1 DO BEGIN
-    
+  FOR i = n_elements(tstart)-1, 0, -1 DO BEGIN  
    
      ; print, anytim(nrh_tstart, /cc), anytim(nrh_tend, /cc)
       ;print, anytim(tstart[i], /cc)
-      write_row, tstart[i], em_start[i], row_num, folder
+      write_row, tstart[i], em_start[i], row_num, folder, wave_times, wave_times_html
       php_incl[i] = "<?php include('"+folder+"/row_"+string(row_num, format='(I03)')+ ".html'); ?>"
       row_num = row_num + 1
  
-     
-    i=i+1
-  ENDWHILE  
+  ENDFOR   
+    ;i=i+1
+  ;ENDWHILE  
   index = where(php_incl ne '')
   print, transpose(php_incl[index])
   
