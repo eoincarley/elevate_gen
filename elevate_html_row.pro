@@ -1,4 +1,4 @@
-pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html
+pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, num_rows
   
   template = rd_tfile('~/ELEVATE/website/row_template.html') 
   template = transpose(template)
@@ -61,10 +61,35 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html
   ;
   ;--------------------------------------------;
 
-  ;Edit CDAW lists
-  irow = where(strtrim(template,1) eq "<!--CME-->")  
+  ;Edit CDAW and Cactus lists
+  irow = where(strtrim(template,1) eq "<!--CDAW-->")  
   ind_date = stregex(template[irow+1], 'daily_movies/', length=len)   
-  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + anytim(tstart, /ecs, /date)+'/")>'
+  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + anytim(tstart, /ecs, /date)+'/")>CDAW</a> <br>'
+
+  irow = where(strtrim(template,1) eq "<!--Cactus-->")  
+  ind_date = stregex(template[irow+1], '2_5_0/', length=len)   
+  cactus_date = anytim(tstart, /ex)
+
+  if anytim(tstart, /utim) le anytim('2010-06-01T00:00:00', /utim) then qkl = '' else qkl='qkl/'
+  cactus_date = string(cactus_date[6], format='(I04)')+'/'+string(cactus_date[5], format='(I02)')
+  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) +qkl+ cactus_date + '/latestCMEs.html")>CACTus</a> <br>' 
+
+  ;-----------------------------------------------;
+  ;           Edit Particle links
+  sep_row = num_rows - (row_num)
+  irow = where(strtrim(template,1) eq "<!--ERNE-->")  
+  ind_date = stregex(template[irow+1], 'ERNE_P_', length=len)   
+  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + string(sep_row, format='(I04)')+'.gif")>ERNE</a><br>'
+
+  if anytim(tstart, /utim) lt anytim('2011-01-28T01:56', /utim) then begin
+    irow = where(strtrim(template,1) eq "<!--EPHIN-->")  
+    ind_date = stregex(template[irow+1], 'EPHIN_Es_', length=len)   
+    template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + string(sep_row, format='(I04)')+'.png")>ERNE</a><br>'
+
+    irow = where(strtrim(template,1) eq "<!--EPAM-->")  
+    ind_date = stregex(template[irow+1], 'EPAM_E_', length=len)   
+    template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + string(sep_row, format='(I04)')+'.png")>EPAM</a><br>'
+  endif
 
 
   ;-----------------------------------------------;
@@ -139,13 +164,14 @@ pro elevate_html_row, fname, folder, outname
 
   i = 0
   row_num = 1
+  num_rows = n_elements(obs_tstart)
   save_index = 0.0
   php_incl = strarr(n_elements(tstart))
   FOR i = n_elements(tstart)-1, 0, -1 DO BEGIN  
    
      ; print, anytim(nrh_tstart, /cc), anytim(nrh_tend, /cc)
       ;print, anytim(tstart[i], /cc)
-      write_row, tstart[i], em_start[i], row_num, folder, wave_times, wave_times_html
+      write_row, tstart[i], em_start[i], row_num, folder, wave_times, wave_times_html, num_rows
       php_incl[i] = "<?php include('"+folder+"/row_"+string(row_num, format='(I03)')+ ".html'); ?>"
       row_num = row_num + 1
  
