@@ -10,7 +10,7 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
   ; Edit time row
   irow = where(strtrim(template,1) eq "<!--Date-->")
   tstring = anytim(tstart, /ccsds, /date_only) +' <br> '+anytim(tstart, /ccsds, /time_only, /trun)
-  template[irow+1] = tstring
+  template[irow+1] = tstring + ' UT'
 
   ; Edit SM links
   irow = where(strtrim(template,1) eq "<!--Solmon-->")  
@@ -107,10 +107,9 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
   wave_check_t1 = anytim(em_start, /utim) + 60.0*60.0
   wave_times = anytim(wave_times, /utim)
   result = where(wave_times ge wave_check_t0 and wave_times le wave_check_t1)
-
-  irow = where(strtrim(template,1) eq "<!--EUV Wave-->")  
   if result[0] ne -1 then begin
       FOR k =0, n_elements(result)-1 DO BEGIN
+          irow = where(strtrim(template,1) eq "<!--EUV Wave-->")  
           wave_time = anytim(wave_times[result[k]], /cc, /time_only, /trun)+' UT'    ; For display online.
           candidate_wave = (strsplit(wave_times_html[result[k]], '"', /extract))[1]
           candidate_wave = (strsplit(candidate_wave, '..', /extract))[0]
@@ -119,10 +118,34 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
           lmsal_211_link = STRJOIN(STRSPLIT(lmsal_211_link, 'AIA_0094', /EXTRACT, /REGEX), 'AIA_0211_RDIFF')
           ind_date = stregex(template[irow+1], 'aia.lmsal.com', length=len)   
           template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + lmsal_211_link + '.html")>LMSAL <br>'+wave_time+'</a><br>'
+
+          ;-----------Find closest flare to this--------------;
+          flare_date = anytim(wave_times[result[k]], /ecs, /date_only)
+          sock_list,'http://www.lmsal.com/solarsoft/latest_events_archive/events_summary/'+flare_date, flare_html
+          if n_elements(flare_html) gt 1 then begin
+              ind_gev = stregex(flare_html, 'gev', length=len) 
+              flare_html = flare_html[where(ind_gev ne -1)]
+              ind_gev = ind_gev[where(ind_gev ne -1)]
+              flare_times = flare_html
+              for i=0, n_elements(ind_gev)-1 do flare_times[i] = file2time( strmid(flare_html[i], ind_gev[i], 17) )
+              ind_flare = closest( anytim(flare_times, /utim), anytim(wave_times[result[k]], /utim))
+              flare_time = flare_times[ind_flare]
+              flare_html = strmid(flare_html[ind_flare], ind_gev[ind_flare], 17) 
+              time_diff = abs( anytim(flare_time, /utim) - anytim(wave_times[result[k]], /utim) )
+              if time_diff lt 1.0*60.0*60.0 then begin
+                  gev_link = 'http://www.lmsal.com/solarsoft/latest_events_archive/events_summary/'+flare_date+'/'+flare_html
+                  sock_list, gev_link, lmsal_flare_info
+                  flare_class = strmid(lmsal_flare_info[where(lmsal_flare_info eq '<th>GOES Class</th>') + 7.0], 4, 4)  
+                  irow = where( strtrim(template, 1) eq "<!--Flare LMSAL-->" )
+                  ind_date = stregex(template[irow+1], 'events_summary/', length=len)   
+                  if flare_class eq 'dy>' then flare_class = 'N/A'
+                  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + flare_date+'/'+flare_html+'")>LMSAL </a><br>'$
+                                  +flare_class+'<br>'+anytim(flare_time, /cc, /time_only, /trun)+' UT'
+              endif
+          endif
       ENDFOR
       euv_wave = 'yes'
   endif
-
   if euv_wave eq 'yes' then template[0] = '<tr bgcolor="CCFFCC" >'
   if nrh_obs_window eq 'yes' and euv_wave eq 'yes' then template[0] = '<tr bgcolor="CCFFFF" >'
 
@@ -130,7 +153,7 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
   openw, 100, '~/ELEVATE/website/'+folder+'/row_'+string(row_num, format='(I03)')+'.html'
   printf, 100, template
   close, 100
-
+  wait, 5
 END
 
 ;-----------------------------------;
@@ -181,7 +204,7 @@ pro elevate_html_row, fname, folder, outname
   nrh_lon = 2.0   ;degrees
   day_hrs = findgen(1000.0)*(24.0)/999.0  ;hours
 
-  i = 0
+
   row_num = 1
   num_rows = n_elements(obs_tstart)
   save_index = 0.0
@@ -189,6 +212,10 @@ pro elevate_html_row, fname, folder, outname
   FOR i = n_elements(tstart)-1, 0, -1 DO BEGIN  
    
      ; print, anytim(nrh_tstart, /cc), anytim(nrh_tend, /cc)
+      print, i
+      print, anytim(tstart[i], /cc)
+      print,' '
+      print,'--------------------------'
       write_row, tstart[i], em_start[i], row_num, folder, wave_times, wave_times_html, num_rows
       php_incl[i] = "<?php include('"+folder+"/row_"+string(row_num, format='(I03)')+ ".html'); ?>"
       row_num = row_num + 1
