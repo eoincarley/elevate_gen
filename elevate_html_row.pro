@@ -1,4 +1,4 @@
-pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, num_rows
+pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, num_rows, flare_class, location, active_region
   
   template = rd_tfile('~/ELEVATE/website/row_template.html') 
   template = transpose(template)
@@ -15,7 +15,7 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
   ; Edit SM links
   irow = where(strtrim(template,1) eq "<!--Solmon-->")  
   ind_date = stregex(template[irow+1], 'date=', length=len) 
-  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + time2file(tstart, /date_only)+'")>'
+  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + time2file(tstart, /date_only)+'")>SM</a>'
 
   irow = where(strtrim(template,1) eq "<!--Goes-->")  
   ind_date = stregex(template[irow+1], 'date=', length=len)   
@@ -32,6 +32,8 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
     ENDIF ELSE BEGIN
         survey='1'
         nrh_obs_window = 'yes'
+        irow = where(strtrim(template,1) eq "<!--RadioImgs-->") 
+        template[irow+1] = 'Soon' 
     ENDELSE
 
     IF anytim(tstart, /utim, /time_only) eq anytim('2000-01-01T12:00:00', /utim, /time_only) then template[0] = '<tr bgcolor="FFCCCC" >'
@@ -65,19 +67,8 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
   ;
   ;--------------------------------------------;
 
-  ;Edit CDAW and Cactus lists
-  irow = where(strtrim(template,1) eq "<!--CDAW-->")  
-  ind_date = stregex(template[irow+1], 'daily_movies/', length=len)   
-  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + anytim(tstart, /ecs, /date)+'/")>CDAW</a> <br>'
-
-  irow = where(strtrim(template,1) eq "<!--Cactus-->")  
-  ind_date = stregex(template[irow+1], '2_5_0/', length=len)   
-  cactus_date = anytim(tstart, /ex)
-
-  if anytim(tstart, /utim) le anytim('2010-06-01T00:00:00', /utim) then qkl = '' else qkl='qkl/'
-  cactus_date = string(cactus_date[6], format='(I04)')+'/'+string(cactus_date[5], format='(I02)')
-  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) +qkl+ cactus_date + '/latestCMEs.html")>CACTus</a> <br>' 
-
+ 
+ 
   ;-----------------------------------------------;
   ;           Edit Particle links
   if folder eq 'soho-erne' then begin
@@ -103,8 +94,8 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
   ;   Data from http://aia.lmsal.com/AIA_Waves/
   ;   Define a two hour window around em_start time
   euv_wave = 'no' ;Default, prove otherwise.
-  wave_check_t0 = anytim(em_start, /utim) - 60.0*60.0
-  wave_check_t1 = anytim(em_start, /utim) + 60.0*60.0
+  wave_check_t0 = anytim(em_start, /utim) - 60.0*60.0*1.5
+  wave_check_t1 = anytim(em_start, /utim) + 60.0*60.0*1.5
   wave_times = anytim(wave_times, /utim)
   result = where(wave_times ge wave_check_t0 and wave_times le wave_check_t1)
   if result[0] ne -1 then begin
@@ -120,32 +111,72 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
           template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + lmsal_211_link + '.html")>LMSAL <br>'+wave_time+'</a><br>'
 
           ;-----------Find closest flare to this--------------;
+          goes_class = flare_class[result[k]]
           flare_date = anytim(wave_times[result[k]], /ecs, /date_only)
-          sock_list,'http://www.lmsal.com/solarsoft/latest_events_archive/events_summary/'+flare_date, flare_html
-          if n_elements(flare_html) gt 1 then begin
-              ind_gev = stregex(flare_html, 'gev', length=len) 
-              flare_html = flare_html[where(ind_gev ne -1)]
-              ind_gev = ind_gev[where(ind_gev ne -1)]
-              flare_times = flare_html
-              for i=0, n_elements(ind_gev)-1 do flare_times[i] = file2time( strmid(flare_html[i], ind_gev[i], 17) )
-              ind_flare = closest( anytim(flare_times, /utim), anytim(wave_times[result[k]], /utim))
-              flare_time = flare_times[ind_flare]
-              flare_html = strmid(flare_html[ind_flare], ind_gev[ind_flare], 17) 
-              time_diff = abs( anytim(flare_time, /utim) - anytim(wave_times[result[k]], /utim) )
-              if time_diff lt 1.0*60.0*60.0 then begin
-                  gev_link = 'http://www.lmsal.com/solarsoft/latest_events_archive/events_summary/'+flare_date+'/'+flare_html
-                  sock_list, gev_link, lmsal_flare_info
-                  flare_class = strmid(lmsal_flare_info[where(lmsal_flare_info eq '<th>GOES Class</th>') + 7.0], 4, 4)  
-                  irow = where( strtrim(template, 1) eq "<!--Flare LMSAL-->" )
-                  ind_date = stregex(template[irow+1], 'events_summary/', length=len)   
-                  if flare_class eq 'dy>' then flare_class = 'N/A'
-                  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + flare_date+'/'+flare_html+'")>LMSAL </a><br>'$
-                                  +flare_class+'<br>'+anytim(flare_time, /cc, /time_only, /trun)+' UT'
-              endif
-          endif
+          gev_name = strmid('gev_'+time2file(wave_times[result[k]]), 0, 17)
+          gev_link = 'http://www.lmsal.com/solarsoft/latest_events_archive/events_summary/'+flare_date+'/'+gev_name
+
+          if goes_class ne 'U-FL' and goes_class ne 'N-FL' then begin
+            irow = where( strtrim(template, 1) eq "<!--Flare LMSAL-->" )
+            ind_date = stregex(template[irow+1], 'events_summary/', length=len)   
+            template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + flare_date+'/'+gev_name+'")>LMSAL </a><br>'$
+                                  +goes_class+'<br>'+anytim(wave_times[result[k]], /cc, /time_only, /trun)+' UT'    
+          endif                        
+
+
+          irow = where(strtrim(template,1) eq "<!--Solmon-->")  
+          ind_date = stregex(template[irow+1], 'date=', length=len) 
+          template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + time2file(tstart, /date_only)+'")>SM</a><br>'+$
+                                active_region[result[k]]+'<br>'+$
+                                location[result[k]]                 
+        
       ENDFOR
       euv_wave = 'yes'
   endif
+
+
+  ;------------------------------------------;
+  ;                 CMEs
+  ;
+  irow = where(strtrim(template,1) eq "<!--CDAW-->")  
+  ind_date = stregex(template[irow+1], 'daily_movies/', length=len)   
+  cdaw_link = 'http://cdaw.gsfc.nasa.gov/CME_list/daily_movies/'+anytim(tstart, /ecs, /date)+'/
+  sock_list, cdaw_link, cdaw_html
+  if cdaw_html[0] ne '' then template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + anytim(tstart, /ecs, /date)+'/")>CDAW</a> <br>'
+  
+  ;-------Find closest CACTus CME------------;
+  irow = where(strtrim(template,1) eq "<!--Cactus-->")  
+  ind_date = stregex(template[irow+1], '2_5_0/', length=len)   
+  cactus_date = anytim(em_start, /ex)
+
+  if anytim(tstart, /utim) le anytim('2010-07-01T00:00:00', /utim) then qkl = '' else qkl='qkl/'
+  cactus_date = string(cactus_date[6], format='(I04)')+'/'+string(cactus_date[5], format='(I02)')
+  cactus_link = 'http://sidc.oma.be/cactus/catalog/LASCO/2_5_0/'+qkl+cactus_date+'/latestCMEs.html
+
+  sock_list, cactus_link, cactus_html
+  cme_links  = cactus_html[where(strmid(cactus_html, 0, 14) eq '  <a href="CME')]
+  cme_info = (strsplit(cme_links[*], '</a>', /extract, /regex))
+  cme_times = fltarr(n_elements(cme_links))
+  for i = 0, n_elements(cme_links)-1 do cme_times[i] = anytim(strmid(cme_info[i, 1], 1, 16), /utim)
+  cme_times = reverse(cme_times) ;Online CACTus list from the bottom up.
+
+  cactus_check_t0 = anytim(em_start, /utim)
+  cactus_check_t1 = anytim(em_start, /utim) + 2.0*60.0*60.0
+  cactus_ind = closest(cme_times, em_start+ 40.0)     ;CME should appear in C2 on average less than 40 mins after EM emission start
+  cme_time = cme_times[cactus_ind]
+  cme_delay =  (cme_time - em_start )/60.0
+  if anytim(cme_time, /utim) gt anytim(tstart, /utim) then question = '(?)' else question = ''
+  print, 'CME DELAY: '+string(cme_delay)+' mins'
+  ;result = where(cme_times ge cactus_check_t0 and cme_times le cactus_check_t1)
+  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) +qkl+ cactus_date +'/latestCMEs.html")>CACTus</a> <br>'
+   if cme_delay lt 90.0 and cme_delay gt -30 then begin
+        cme_time = anytim(cme_time, /cc, /time_only, /trun)
+        print, cme_time
+        cme_num = 'CME'+string(cactus_ind+1, format='(I04)')
+        template[irow+1] = template[irow+1] + strmid(template[irow+1], 0, ind_date+len) +qkl+ cactus_date +'/'+cme_num+'/CME.html")>'+cme_time+' UT</a> '+question+'<br>' 
+   endif
+
+
   if euv_wave eq 'yes' then template[0] = '<tr bgcolor="CCFFCC" >'
   if nrh_obs_window eq 'yes' and euv_wave eq 'yes' then template[0] = '<tr bgcolor="CCFFFF" >'
 
@@ -153,7 +184,7 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
   openw, 100, '~/ELEVATE/website/'+folder+'/row_'+string(row_num, format='(I03)')+'.html'
   printf, 100, template
   close, 100
-  wait, 5
+  wait, 2.0
 END
 
 ;-----------------------------------;
@@ -192,7 +223,8 @@ pro elevate_html_row, fname, folder, outname
   readcol, fname, obs_tstart, format='A'
 
   tonset = obs_tstart ;anytim(obs_tstart, /utim) + 0.25*24.0*3600.0  ;Onset is 0.25 days after obs start in catalogue
-  em_start = anytim(tonset, /utim) - 60.0*60.0*2.0 ;Roughly, 55-80 MeV protons arrive ~1hr after first EM signatures.
+  ;Roughly, 55-80 MeV protons arrive ~1hr after first EM signatures. Also take into account light travel time:
+  em_start = anytim(tonset, /utim) - 60.0*60.0*1.0 + 8.0*60.0 
   tstart = tonset
   
   restore, 'lmsal_euv_wave_times.sav'
@@ -216,7 +248,7 @@ pro elevate_html_row, fname, folder, outname
       print, anytim(tstart[i], /cc)
       print,' '
       print,'--------------------------'
-      write_row, tstart[i], em_start[i], row_num, folder, wave_times, wave_times_html, num_rows
+      write_row, tstart[i], em_start[i], row_num, folder, wave_times, wave_times_html, num_rows, flare_class, location, active_region
       php_incl[i] = "<?php include('"+folder+"/row_"+string(row_num, format='(I03)')+ ".html'); ?>"
       row_num = row_num + 1
  
