@@ -98,6 +98,7 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
   wave_check_t1 = anytim(em_start, /utim) + 60.0*60.0*1.5
   wave_times = anytim(wave_times, /utim)
   result = where(wave_times ge wave_check_t0 and wave_times le wave_check_t1)
+
   if result[0] ne -1 then begin
       FOR k =0, n_elements(result)-1 DO BEGIN
           irow = where(strtrim(template,1) eq "<!--EUV Wave-->")  
