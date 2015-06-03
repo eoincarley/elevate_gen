@@ -1,0 +1,116 @@
+--------------------------------------------------------
+Running SSW, Last Updated: Wed Nov 2 22:22:51 GMT 2005
+ 
+PROBLEMS? - e-mail TO: freeland@penumbra.nascom.nasa.gov
+--------------------------------------------------------
+Executing SSW IDL_STARTUP for: GEN
+Executing SSW IDL_STARTUP for: STEREO gen tree
+Registering DLM /usr/local/ssw/stereo/gen/exe/icy/darwin_x86_64/lib/icy.dlm
+Executing SSW IDL_STARTUP for: SECCHI
+Including Paths:
+ -----------------------------
+| $SSW/packages/mjastereo/idl |
+ -----------------------------
+Including Paths:
+ -----------------------------------------------
+| $SSW/packages/nrl/idl/nrlgen/aia              |
+| $SSW/packages/nrl/idl/nrlgen/analysis         |
+| $SSW/packages/nrl/idl/nrlgen/dfanning         |
+| $SSW/packages/nrl/idl/nrlgen/display/diva     |
+| $SSW/packages/nrl/idl/nrlgen/display          |
+| $SSW/packages/nrl/idl/nrlgen/lascoeit         |
+| $SSW/packages/nrl/idl/nrlgen/time             |
+| $SSW/packages/nrl/idl/nrlgen/util/discri_pobj |
+| $SSW/packages/nrl/idl/nrlgen/util             |
+| $SSW/packages/nrl/idl/nrlgen/widgets          |
+ -----------------------------------------------
+Executing SSW IDL_STARTUP for: LASCO
+Including Paths:
+ -----------------------------------------------
+| $SSW/packages/nrl/idl/nrlgen/aia              |
+| $SSW/packages/nrl/idl/nrlgen/analysis         |
+| $SSW/packages/nrl/idl/nrlgen/dfanning         |
+| $SSW/packages/nrl/idl/nrlgen/display/diva     |
+| $SSW/packages/nrl/idl/nrlgen/display          |
+| $SSW/packages/nrl/idl/nrlgen/lascoeit         |
+| $SSW/packages/nrl/idl/nrlgen/time             |
+| $SSW/packages/nrl/idl/nrlgen/util/discri_pobj |
+| $SSW/packages/nrl/idl/nrlgen/util             |
+| $SSW/packages/nrl/idl/nrlgen/widgets          |
+ -----------------------------------------------
+Executing SSW IDL_STARTUP for: EIT
+executing EIT IDL_STARTUP
+Executing SSW IDL_STARTUP for: AIA
+Including Paths:
+ ---------------------------------
+| $SSW/vobs/gen/idl               |
+| $SSW/vobs/ontology/idl/gen_temp |
+| $SSW/vobs/ontology/idl/jsoc     |
+| $SSW/vobs/ontology/idl          |
+ ---------------------------------
+Including Paths:
+ ----------------------------
+| $SSW/sdo/gen/idl/attitude  |
+| $SSW/sdo/gen/idl/utilities |
+ ----------------------------
+Executing SSW IDL_STARTUP for: SITE
+NRGF: Pixel size not provided
+      Assume pix_size=1
+NRGF: Pixel size not provided
+      Assume pix_size=1
+NRGF: Pixel size not provided
+      Assume pix_size=1
+X was written to ~/Data/elevate_db/2011-08-09/SDO/AIA/image_000.png
+-------------------
+Currently 0017 seconds per 3 color image.
+-------------------
+NRGF: Pixel size not provided
+      Assume pix_size=1
+NRGF: Pixel size not provided
+      Assume pix_size=1
+NRGF: Pixel size not provided
+      Assume pix_size=1
+X was written to ~/Data/elevate_db/2011-08-09/SDO/AIA/image_001.png
+-------------------
+Currently 0007 seconds per 3 color image.
+-------------------
+NRGF: Pixel size not provided
+      Assume pix_size=1
+NRGF: Pixel size not provided
+      Assume pix_size=1
+NRGF: Pixel size not provided
+      Assume pix_size=1
+X was written to ~/Data/elevate_db/2011-08-09/SDO/AIA/image_002.png
+-------------------
+Currently 0007 seconds per 3 color image.
+-------------------
+NRGF: Pixel size not provided
+      Assume pix_size=1
+NRGF: Pixel size not provided
+      Assume pix_size=1
+NRGF: Pixel size not provided
+      Assume pix_size=1
+X was written to ~/Data/elevate_db/2011-08-09/SDO/AIA/image_003.png
+-------------------
+Currently 0008 seconds per 3 color image.
+-------------------
+NRGF: Pixel size not provided
+      Assume pix_size=1
+NRGF: Pixel size not provided
+      Assume pix_size=1
+NRGF: Pixel size not provided
+      Assume pix_size=1
+X was written to ~/Data/elevate_db/2011-08-09/SDO/AIA/image_004.png
+-------------------
+Currently 0008 seconds per 3 color image.
+-------------------
+NRGF: Pixel size not provided
+      Assume pix_size=1
+NRGF: Pixel size not provided
+      Assume pix_size=1
+NRGF: Pixel size not provided
+      Assume pix_size=1
+X was written to ~/Data/elevate_db/2011-08-09/SDO/AIA/image_005.png
+-------------------
+Currently 0008 seconds per 3 color image.
+-------------------

@@ -1,4 +1,5 @@
-pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, num_rows, flare_class, location, active_region
+pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, num_rows, flare_class, location, active_region, $
+                      assoc_wave_time
   
   template = rd_tfile('~/ELEVATE/website/row_template.html') 
   template = transpose(template)
@@ -9,17 +10,21 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
 
   ; Edit time row
   irow = where(strtrim(template,1) eq "<!--Date-->")
-  tstring = anytim(tstart, /ccsds, /date_only) +' <br> '+anytim(tstart, /ccsds, /time_only, /trun)
+  tstring = anytim(tstart, /ccsds, /date_only) + $
+      ' <br> '+anytim(tstart, /ccsds, /time_only, /trun)
   template[irow+1] = tstring + ' UT'
 
   ; Edit SM links
   irow = where(strtrim(template,1) eq "<!--Solmon-->")  
   ind_date = stregex(template[irow+1], 'date=', length=len) 
-  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + time2file(tstart, /date_only)+'")>SM</a>'
+  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + $
+        time2file(tstart, /date_only)+'")>SM</a>'
 
   irow = where(strtrim(template,1) eq "<!--Goes-->")  
   ind_date = stregex(template[irow+1], 'date=', length=len)   
-  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + time2file(tstart, /date_only)+'&type=xray")>'
+  template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + $
+        time2file(tstart, /date_only)+'&type=xray")>'
+   
   
   ;--------------------------------------------;
   ;           Edit Radio links
@@ -40,7 +45,8 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
 
     irow = where(strtrim(template,1) eq "<!--RadioBurst-->")  
     ind_date = stregex(template[irow+1], 'dayofyear=', length=len)   
-    template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + time2file(tstart, /date_only)+'&survey_type='+survey+'")>Obspm</a><br>'
+    template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + $
+          time2file(tstart, /date_only)+'&survey_type='+survey+'")>Obspm</a><br>'
     
     ; Learmonth Culgoora
     lear_tstart = anytim('2001-01-01T21:30:00', /utim, /time_only)  
@@ -122,16 +128,29 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
             ind_date = stregex(template[irow+1], 'events_summary/', length=len)   
             template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + flare_date+'/'+gev_name+'")>LMSAL </a><br>'$
                                   +goes_class+'<br>'+anytim(wave_times[result[k]], /cc, /time_only, /trun)+' UT'    
-          endif                        
+          endif   
 
+          ;-----------Find closest flare to this--------------;
+          goes_class = flare_class[result[k]]
+          flare_date = anytim(wave_times[result[k]], /ecs, /date_only)
+          gev_name = strmid('gev_'+time2file(wave_times[result[k]]), 0, 17)
+          gev_link = 'http://www.lmsal.com/solarsoft/latest_events_archive/events_summary/'+flare_date+'/'+gev_name
+
+          if goes_class ne 'U-FL' and goes_class ne 'N-FL' then begin
+            irow = where( strtrim(template, 1) eq "<!--Flare LMSAL-->" )
+            ind_date = stregex(template[irow+1], 'events_summary/', length=len)   
+            template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + flare_date+'/'+gev_name+'")>LMSAL </a><br>'$
+                                  +goes_class+'<br>'+anytim(wave_times[result[k]], /cc, /time_only, /trun)+' UT'    
+          endif                        
 
           irow = where(strtrim(template,1) eq "<!--Solmon-->")  
           ind_date = stregex(template[irow+1], 'date=', length=len) 
           template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + time2file(tstart, /date_only)+'")>SM</a><br>'+$
                                 active_region[result[k]]+'<br>'+$
-                                location[result[k]]                 
-        
+                                location[result[k]] 
+
       ENDFOR
+      if row_num eq 1 then assoc_wave_time = wave_times[result[0]] else assoc_wave_time = [ assoc_wave_time, wave_times[ result[0]] ]
       euv_wave = 'yes'
   endif
 
@@ -193,6 +212,10 @@ END
 ;
 pro nrh_sun_ephemeris, tstart, $
         nrh_tstart, nrh_tend
+
+  ;Nancay observed for 7 hours of the day centered around the time when
+  ;the Sun pases through the meridian at Nancay e.g., when the Sun
+  ;has maximum elevation or minimum zenith      
          
   nrh_lat = 47.0  ;degrees
   nrh_lon = 2.0   ;degrees
@@ -216,27 +239,19 @@ END
 ;
 pro elevate_html_row, fname, folder, outname
 
-    ;Procedure to produce html rows for the ELEVATE catalogue.
-    ;Input is the text file of times from SEPserver catalogues.
+  ;Procedure to produce html rows for the ELEVATE catalogue.
+  ;Input is the text file of times from SEPserver catalogues.
 
   template = rd_tfile('~/ELEVATE/website/row_template.html') 
+  
   ;readcol, fname, obs_tstart, obs_tend, a, format='A,A,D', delimiter=','
   readcol, fname, obs_tstart, format='A'
-
   tonset = obs_tstart ;anytim(obs_tstart, /utim) + 0.25*24.0*3600.0  ;Onset is 0.25 days after obs start in catalogue
-  ;Roughly, 55-80 MeV protons arrive ~1hr after first EM signatures. Also take into account light travel time:
+  ;Roughly, 55-80 MeV protons arrive ~1hr after first EM signatures. Also take into account rough light travel time:
   em_start = anytim(tonset, /utim) - 60.0*60.0*1.0 + 8.0*60.0 
   tstart = tonset
   
   restore, 'lmsal_euv_wave_times.sav'
-    ;Nancay observed for 7 hours of the day centered around the time when
-    ;the Sun pases through the meridian at Nancay e.g., when the Sun
-    ;has maximum elevation or minimum zenith
-  
-  nrh_lat = 47.0  ;degrees
-  nrh_lon = 2.0   ;degrees
-  day_hrs = findgen(1000.0)*(24.0)/999.0  ;hours
-
 
   row_num = 1
   num_rows = n_elements(obs_tstart)
@@ -244,18 +259,16 @@ pro elevate_html_row, fname, folder, outname
   php_incl = strarr(n_elements(tstart))
   FOR i = n_elements(tstart)-1, 0, -1 DO BEGIN  
    
-     ; print, anytim(nrh_tstart, /cc), anytim(nrh_tend, /cc)
-      print, i
-      print, anytim(tstart[i], /cc)
-      print,' '
-      print,'--------------------------'
-      write_row, tstart[i], em_start[i], row_num, folder, wave_times, wave_times_html, num_rows, flare_class, location, active_region
+      write_row, tstart[i], em_start[i], row_num, folder, wave_times, wave_times_html, num_rows, flare_class, location, active_region, $
+                              assoc_wave_time
       php_incl[i] = "<?php include('"+folder+"/row_"+string(row_num, format='(I03)')+ ".html'); ?>"
       row_num = row_num + 1
  
   ENDFOR   
-    ;i=i+1
-  ;ENDWHILE  
+
+  stop
+  save, assoc_wave_time, filename = 'assoc_wave_time.sav'
+
   index = where(php_incl ne '')
   print, transpose(php_incl[index])
   

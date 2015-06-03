@@ -1,0 +1,6 @@
+.c aia_process_image
+.c aia_three_color
+.c aia_three_color_allimgs
+
+aia_three_color_allimgs, 24, 31, 3
+exit

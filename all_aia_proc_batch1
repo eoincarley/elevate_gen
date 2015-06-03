@@ -1,0 +1,3 @@
+#!/bin/tcsh
+source ~/.tcshrc
+sswidl ~/idl/elevate_gen/all_aia_proc1

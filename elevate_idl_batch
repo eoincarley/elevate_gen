@@ -1,0 +1,3 @@
+#!/bin/tcsh
+source ~/.tcshrc
+sswidl ~/idl/elevate_gen/get_elevate_batch
