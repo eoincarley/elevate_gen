@@ -229,9 +229,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
          iscaled_c = oBridge3->GetVar('iscaled_c')
 
       ENDIF ELSE BEGIN
-         aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /nrgf
-         aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /nrgf
-         aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /nrgf
+         aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size;, /nrgf
+         aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size;, /nrgf
+         aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size;, /nrgf
       ENDELSE
      
       ; Check that the images are closely spaced in time

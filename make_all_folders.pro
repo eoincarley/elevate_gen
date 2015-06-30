@@ -16,7 +16,7 @@ pro make_all_folders, specific_date = specific_date
 	;Roughly, 55-80 MeV protons arrive ~1hr after first EM signatures. Also take into account rough light travel time:
 	em_start = anytim(obs_tstart, /utim) - 60.0*60.0*1.0 + 8.0*60.0
 	obs_tstart = em_start
-	index_aia_era = where(anytim(obs_tstart, /utim) gt anytim(file2time('20100801_000000'), /utim))
+	index_aia_era = where(anytim(obs_tstart, /utim) gt anytim(file2time('20100801_000000'), /utim))	;AIA era
 	obs_tstart = obs_tstart[index_aia_era]
 	all_folder_dates = anytim(obs_tstart, /cc, /date_only)
 
@@ -24,44 +24,46 @@ pro make_all_folders, specific_date = specific_date
 	;-----------------------;
 	;	 Get AIA Data
 	;
-	index=0
-	while index le n_elements(all_folder_dates)-1 do begin 	;Shitty loop
+	i=0
+	while i le n_elements(all_folder_dates)-1 do begin 	;Shitty loop. Make better.
 		
 		if keyword_set(specific_date) then begin
 			folder = anytim(specific_date, /cc, /date_only)
-			tstart = anytim(specific_date, /utim)
-			index = n_elements(all_folder_dates)-1
+			i = where(folder eq all_folder_dates)
+			;tstart = anytim(specific_date, /utim)
+			tstart = obs_tstart[i] 
+			i = n_elements(all_folder_dates)-1
 		endif else begin
-			folder = all_folder_dates[index]
-			tstart = obs_tstart[index] 
+			folder = all_folder_dates[i]
+			tstart = obs_tstart[i] 
 		endelse	
-		
 		exist = where(folder eq current_folder_dates)
 		
-		if exist eq -1 then begin
-			box_message, str2arr(folder + ',Folder does not exist. Making folder. Downloading')
-			for j=0, 2 do spawn, 'mkdir -p ' + elev_folder + folder + '/SDO/AIA/' + aia_lambda[i]
-		endif 
+		;if exist eq -1 then begin
+			;box_message, str2arr(folder + ',Folder does not exist. Making folder. Downloading')
+			;for j=0, 2 do spawn, 'mkdir -p ' + elev_folder + folder + '/SDO/AIA/' + aia_lambda[j]
 
-		t0 = anytim( tstart - 10.0*60.0, /cc, /trun)
-		t1 = anytim( tstart + 50.0*60.0, /cc, /trun)
+			t0 = anytim( tstart - 10.0*60.0, /cc, /trun)
+			t1 = anytim( tstart + 50.0*60.0, /cc, /trun)
 
-		out_folder = elev_folder + folder + '/SDO/AIA/' 
-		box_message, str2arr('Downloading data into '+out_folder+'between times '+t0+' and '+t1 )
+			out_folder = elev_folder + folder + '/SDO/AIA/' 
+			box_message, str2arr('Downloading data into '+out_folder+'between times '+t0+' and '+t1 )
 
-		stop
-		files = vso_search( t0, t1, instr = 'AIA', wave = aia_lambda[0]+' Angstrom')
-		result = vso_get(files, OUT_DIR = out_folder+'/'+aia_lambda[0])
-		wait, 1.0*60.0
-		files = vso_search( t0, t1, instr = 'AIA', wave = aia_lambda[1]+' Angstrom')
-		result = vso_get(files, OUT_DIR = out_folder+'/'+aia_lambda[1])
-		wait, 1.0*60.0
-		files = vso_search( t0, t1, instr = 'AIA', wave = aia_lambda[2]+' Angstrom')
-		result = vso_get(files, OUT_DIR = out_folder+'/'+aia_lambda[2])
-		wait, 1.0*60.0
-		box_message, str2arr(folder + ',Folder exists. Downloading')
-		
-		index = index+1
+			files = vso_search( t0, t1, instr = 'AIA', wave = aia_lambda[0]+' Angstrom')
+			result = vso_get(files, OUT_DIR = out_folder+'/'+aia_lambda[0]);, /force)
+			wait, 1.0*60.0
+			files = vso_search( t0, t1, instr = 'AIA', wave = aia_lambda[1]+' Angstrom')
+			result = vso_get(files, OUT_DIR = out_folder+'/'+aia_lambda[1]);, /force)
+			wait, 1.0*60.0
+			files = vso_search( t0, t1, instr = 'AIA', wave = aia_lambda[2]+' Angstrom')
+			result = vso_get(files, OUT_DIR = out_folder+'/'+aia_lambda[2]);, /force)
+			wait, 1.0*60.0
+			box_message, str2arr(folder + ',Folder exists. Downloading')
+
+			stop
+			wait, 60.*60.0
+		;endif 	
+		i = i+1
 	endwhile
 
 stop
