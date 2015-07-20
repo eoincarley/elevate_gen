@@ -4,7 +4,8 @@ pro get_elevate_aia_data, assoc_wave_times
 
 	lambda = ['171', '193', '211']	; Angstroms
 	restore, assoc_wave_times, /verb		; Wave times in /utim
-	
+	;start_file = 0
+
 	;for i = 0, n_elements(wave_times)-1 do begin
 	if start_file lt n_elements(assoc_wave_times) then begin
 
@@ -31,7 +32,7 @@ pro get_elevate_aia_data, assoc_wave_times
 
 		;SAVE TIMES FOR REMAINING DOWNLOADS.
 		start_file = start_file + 1
-		save, assoc_wave_times, start_file, filename = '/Users/eoincarley/Data/elevate_db/assoc_wave_times.sav'
+		save, assoc_wave_times, start_file, filename = '~/Data/elevate_db/assoc_wave_times.sav'
 
 	endif else begin
 		print, 'Nothing to download. Exiting.'

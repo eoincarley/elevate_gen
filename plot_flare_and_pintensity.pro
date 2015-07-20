@@ -24,9 +24,9 @@ pro plot_flare_and_pintensity
 	;
 	loadct, 0
 	reverse_ct
-	window, 0, xs=800, ys=800
+	;window, 0, xs=800, ys=800
 
-	restore, 'assoc_flare_data.sav', /verb
+	restore, '~/ELEVATE/data/assoc_flare_data.sav', /verb
 	flare_time = output_flare_data[0, *]
 	flare_class = output_flare_data[1, *]
 	flare_pos = output_flare_data[2, *]
@@ -39,22 +39,22 @@ pro plot_flare_and_pintensity
 	latlon = fltarr(2, n_elements(flare_lat))
 	symcol = fltarr(n_elements(flare_pos))
 
-	readcol, 'soho_onset.txt', obs_start, p_intensity, format='A, A'
+	readcol, '~/ELEVATE/data/SEPserver/soho_onset.txt', obs_start, p_intensity, format='A, A'
 	obs_start = (reverse(obs_start))[good_index]
 	p_intensity = (reverse(p_intensity))[good_index]
 	for i=0, n_elements(p_intensity)-1 do begin
 
 		p_intensity[i] = strsplit(p_intensity[i], escape='>', /extract)
 		sat_index = where(p_intensity eq 'saturated')
-		p_intensity[sat_index] = '0.0'
+		p_intensity[sat_index] = '3.3e-1'
 
 	endfor
 
 	p_intensity =float(p_intensity)
-	size_range = (findgen(100)*(3. - 1.)/9.9) + 1.0
+	size_range = (findgen(100)*(3. - 1.)/99.) + 1.0
 
 	plog = alog10(100.0*p_intensity)
-	irange = (findgen(100)*(max(plog) - min(plog))/99) + min(plog)
+	irange = (findgen(100)*(max(plog) - min(plog))/99.) + min(plog)
 	sizes = interpol(size_range, irange, plog)
 
 	for i=0, n_elements(flare_pos)-1 do begin
@@ -81,27 +81,42 @@ pro plot_flare_and_pintensity
 	latlon[0, *] = flare_lat
 	latlon[1, *] = flare_lon
 
-	setup_ps, 'assoc_flare_plot.eps'
+	setup_ps, '~/ELEVATE/data/assoc_flare_plot.eps'
 		set_line_color
 		!p.background=1
 		draw_grid_eoin_edit, latlon=latlon, symsize = plog*3.5, symcolor = symcol, color=0, thick=2.0
 
 		;legend, ['B', 'C', 'M', 'X'], psym=[4,4,4,4], color=[9,4,5,3], box=0, charsize=3, thick=3, charthick=2, /bottom, /right
 
-		p_intensity = p_intensity[where(p_intensity) gt 0.0]
+		;p_intensity = p_intensity[where(p_intensity) gt 0.0]
 		max_int = string( max(p_intensity), format='(e9.2)' )
 		min_int = string( min(p_intensity), format='(e9.2)' )
 		mean_int = string( mean(p_intensity), format='(e9.2)' )
 		unit  = ' (cm!U-2!N, s!U-1!N, sr!U-1!N, MeV!U-1!N)'
-		legend, [min_int+unit , max_int+unit ], psym=[4, 4], color=[0,0], symsize=[1,3], box=0, charsize=1.5, thick=3, charthick=1.5, /bottom
+		legend, [min_int+unit , max_int+unit ], $
+				psym=[4, 4], $
+				color=[0,0], $
+				symsize=[1,3], $
+				box=0, $
+				charsize=1.5, $
+				thick=3, $
+				charthick=1.5, $
+				/bottom, $
+				pos = [0.05, 0.02], $
+				/normal
 		
-		xyouts, 0.15, 0.08, 'B', color=9, /normal, charsize=2.0, charthick=2
-		xyouts, 0.11, 0.08, 'C', color=4, /normal, charsize=2.0, charthick=2
-		xyouts, 0.07, 0.08, 'M', color=5, /normal, charsize=2.0, charthick=2
-		xyouts, 0.03, 0.08, 'X', color=3, /normal, charsize=2.0, charthick=2
+		xyouts, 0.18, 0.08, 'B', color=9, /normal, charsize=2.0, charthick=2
+		xyouts, 0.14, 0.08, 'C', color=4, /normal, charsize=2.0, charthick=2
+		xyouts, 0.10, 0.08, 'M', color=5, /normal, charsize=2.0, charthick=2
+		xyouts, 0.06, 0.08, 'X', color=3, /normal, charsize=2.0, charthick=2
+
+		xyouts, 0.5, 0.95, 'Flares associated with SOHO/ERNE SEP Server events', /normal, alignment=0.5, charsize=1.5, color=0
+		xyouts, 0.5, 0.925, 'Nov 2002 - Sept 2014', /normal, alignment=0.5, charsize=1.5, color=0
+	
+
 	device, /close
 	set_plot, 'x'
 
-
+stop
 
 END

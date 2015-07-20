@@ -24,7 +24,7 @@ pro make_all_folders, specific_date = specific_date
 	;-----------------------;
 	;	 Get AIA Data
 	;
-	i=0
+	i=19
 	while i le n_elements(all_folder_dates)-1 do begin 	;Shitty loop. Make better.
 		
 		if keyword_set(specific_date) then begin
@@ -60,8 +60,8 @@ pro make_all_folders, specific_date = specific_date
 			wait, 1.0*60.0
 			box_message, str2arr(folder + ',Folder exists. Downloading')
 
-			stop
-			wait, 60.*60.0
+			;stop
+			wait, 30.*60.0
 		;endif 	
 		i = i+1
 	endwhile
