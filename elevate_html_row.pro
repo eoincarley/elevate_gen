@@ -26,6 +26,8 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
     template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + $
         time2file(tstart, /date_only)+'&type=xray")>'
 
+    event_folder = '/Users/eoincarley/ELEVATE/data/'+anytim(em_start, /cc, /date)+'/'
+    date_string = time2file(em_start, /date_only)
 
     ;---------------------------------------------------;
     ;---------Find closest flare to em_start------------;
@@ -70,22 +72,26 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
             if nors eq '0' or nors eq '1' then gev_active_region = gev_active_region else gev_active_region = ''
             flare_time_stamp = anytim(gev_flare_time, /cc, /time_only, /trun)+' UT'    
             ;if gev_name eq 'gev_20140901_1805' then stop
+
+                    ;event_info_to_text, event_folder, date_string, 'flare_class', goes_class
+                    ;event_info_to_text, event_folder, date_string, 'flare_start_t', anytim(gev_flare_time, /cc)+' UT'
+                    ;event_info_to_text, event_folder, date_string, 'flare_location', gev_location  
         endelse   
 
-            irow = where( strtrim(template, 1) eq "<!--Flare LMSAL-->" )
-            ind_date = stregex(template[irow+1], 'events_summary/', length=len)   
-            template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + flare_date+'/'+gev_name+'")>LMSAL </a><br>'$
-                              +goes_class+'<br>'+flare_time_stamp
+        irow = where( strtrim(template, 1) eq "<!--Flare LMSAL-->" )
+        ind_date = stregex(template[irow+1], 'events_summary/', length=len)   
+        template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + flare_date+'/'+gev_name+'")>LMSAL </a><br>'$
+                          +goes_class+'<br>'+flare_time_stamp
 
-            irow = where(strtrim(template,1) eq "<!--Solmon-->")  
-            ind_date = stregex(template[irow+1], 'date=', length=len) 
-            template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + time2file(gev_flare_time, /date_only)+'")>SM</a><br>'+$
-                                gev_active_region+'<br>'+$
-                                gev_location       
+        irow = where(strtrim(template,1) eq "<!--Solmon-->")  
+        ind_date = stregex(template[irow+1], 'date=', length=len) 
+        template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + time2file(gev_flare_time, /date_only)+'")>SM</a><br>'+$
+                            gev_active_region+'<br>'+$
+                            gev_location       
 
         output_flare_data[0, row_num-1] = anytim(gev_flare_time, /cc)
         output_flare_data[1, row_num-1] = goes_class
-        output_flare_data[2, row_num-1] = gev_location                            
+        output_flare_data[2, row_num-1] = gev_location                          
 
     endif
 
@@ -202,7 +208,8 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
 
                 output_flare_data[0, row_num-1] = anytim(wave_times[result[k]], /cc)
                 output_flare_data[1, row_num-1] = goes_class
-                output_flare_data[2, row_num-1] = location[result[k]]                               
+                output_flare_data[2, row_num-1] = location[result[k]]        
+
             endif                        
 
         ENDFOR
@@ -278,6 +285,12 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
         endif else begin
             cme_list = [[cme_list], [cme_times[cactus_ind], cme_vels[cactus_ind], cme_pa[cactus_ind], cme_wid[cactus_ind], pinten]]
         endelse
+
+                ;event_info_to_text, event_folder, date_string, 'cme_time', anytim(cme_times[cactus_ind], /cc)+' UT'
+                ;event_info_to_text, event_folder, date_string, 'cme_speed', string(cme_vels[cactus_ind], format='(f6.1)')+' km/s'
+                ;event_info_to_text, event_folder, date_string, 'cme_pa', string(cme_pa[cactus_ind], format='(I3)')+' deg'
+                ;event_info_to_text, event_folder, date_string, 'cme_width', string(cme_wid[cactus_ind], format='(I3)')+' deg'
+
     endif
 
 

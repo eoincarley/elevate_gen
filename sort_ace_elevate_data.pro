@@ -15,6 +15,7 @@ pro sort_ace_elevate_data, ace_filename
 
 	for i=0, n_elements( (data.field01)[0, *] )-1 do date[i] = anytim( date_conv(date_doy[*, i], 'string'), /utim )
 	
+	stop
 
 	index = 0.0
 	j = 0.0
