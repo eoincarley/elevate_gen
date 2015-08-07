@@ -221,8 +221,8 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		endelse
 
 		chan_inds = ((indgen(19)*(22 - 3)/18 ) + 3)*2
-		start_energy = '45.6'
-		end_energy = '108'
+		start_energy = '15.4'
+		end_energy = '72.0'
 		particle_data = erne_data
 		particle_date = erne_date
 		chan_start = (chan_inds[where(erne_energies eq start_energy)])[0] + count_on
