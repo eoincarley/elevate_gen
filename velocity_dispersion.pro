@@ -178,7 +178,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	!p.charsize = 1.5
 	event_folder = '/Users/eoincarley/ELEVATE/data/' +date_folder+ '/'
 	ace_folder = event_folder + 'ACE/'
-	soho_folder = event_folder + 'ERNE/'
+	soho_folder = event_folder + 'SOHO/ERNE/'
 
 	yrange = '[1e-4, 1e4]'		; To be used in case that CUSUM method is chosen and particle counts are used.		 
 
@@ -221,8 +221,8 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		endelse
 
 		chan_inds = ((indgen(19)*(22 - 3)/18 ) + 3)*2
-		start_energy = '15.4'
-		end_energy = '72.0'
+		start_energy = '23.9'
+		end_energy = '108'
 		particle_data = erne_data
 		particle_date = erne_date
 		chan_start = (chan_inds[where(erne_energies eq start_energy)])[0] + count_on
@@ -233,7 +233,8 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		instrument = 'SOHO ERNE PROTONS'
 		particle_type = 'proton'
 		smooth_param = 2
-		average_window = 240.0
+		average_window = 420.0
+		detection_time_err = 10.0 	; minutes
 
 	endif
 
@@ -255,6 +256,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	epam_electrons = epam_data[9:12, *]	
 
 	if keyword_set(epam_e) then begin	
+		
 		yrange = '[1e-2, 1e6]'
 		particle_data = epam_electrons
 		particle_date = epam_data[0, *]
@@ -267,6 +269,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		particle_type = 'electron'
 		smooth_param = 5
 		average_window = 240.0
+		detection_time_err = 5.0 	; minutes
 
 	endif	
 
@@ -283,6 +286,8 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		particle_type = 'proton'
 		smooth_param = 30
 		average_window = 180.0
+		detection_time_err = 5.0 	; minutes
+
 
 	endif
 
@@ -292,7 +297,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 
 
 	for channel=chan_start, chan_end, chan_step do begin		; Loop through energy channels
-		window, 0, xs=1000, ys=600
+		window, 0, xs=1500, ys=800
 		good = where(particle_data[channel, *] gt 0.0)
 		if good[0] ne -1 then begin
 			ints = smooth(particle_data[channel, good], smooth_param)		; Smoothness is an important parameter
@@ -303,7 +308,6 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		
 			xyouts, date[nels-1] +60.0*2.0, ints[nels-1], chan_energies[chan_name] + ' MeV', /data
 			chan_name = chan_name + 1.0
-
 
 			;----------------------------------------------------------;
 			;		     Choose detection method here 		  		   ;
@@ -354,31 +358,63 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		/ys, $
 		xr = [min(1.0/[c_fraction])-0.1, max(1.0/[c_fraction])+0.1], $
 		yr = [min(day_fraction)-0.01, max(day_fraction)+0.01], $
-		psym = 2, $
-		symsize = 3.0, $
-		pos = [0.07, 0.08, 0.3, 0.47], $
+		psym = 1, $
+		symsize = 1.0, $
+		pos = [0.07, 0.08, 0.35, 0.52], $
 		xtitle = 'Inverse velocity (Beta!U-1!N)', $
 		ytitle = 'Day fraction', $
 		/noerase, $
 		/normal
 
+	yerr = day_fraction
+	yerr[*] = detection_time_err/(24.0*60.0)					; 10 min error on in-situ detection time
+	xerr = day_fraction
+	xerr[*] = 0.0
+	oploterror, 1.0/[c_fraction], [day_fraction], $
+				xerr, yerr
+
 	;----------------- Fitting --------------------;
 	result = linfit(1.0/[c_fraction], [day_fraction], yfit = yfit)	
 	oplot, 1.0/[c_fraction], yfit
 
-	start = [result[1], result[0]]	;[slope, intercept]
+	start = [0.0087, result[0]]		;[slope, intercept] ;Start of with 1.5 AU 
 	fit = 'p[0]*x + p[1]'
-	p = mpfitexpr(fit, 1.0/[c_fraction], [day_fraction], err, yfit=yfit, start)
 
+	par_lim = replicate({fixed:0, limited:[0,0], limits:[0.D,0.D]},2)
+
+	par_lim(0).limited(0) = 1 		;Activate lower boundary
+	par_lim(0).limits(0) = 0.00578	;Constrians travel dist to be greater than 1.0 AU
+
+	par_lim(0).limited(1) = 1 		;Activate upper boundary
+	par_lim(0).limits(1) = 0.017	;Constrians travel dist to be less than 3.0 AU
+
+	p = mpfitexpr(fit, 1.0/[c_fraction], [day_fraction], $
+					yerr, $
+					yfit=yfit, $
+					start, $
+					parinfo = par_lim, $
+					perror = perror, $
+					bestnorm = bestnorm, $
+					dof=dof)
 
 	t_release = p[1]*(24.0*60.*60.0) + day_start
 	t_release = anytim(t_release, /cc)
 
 	day_frac_lt = 8.33/(24.0*60.0) 	; Day fraction of light travel time
 	travel_dist = result[1]/day_frac_lt
-	dist_string = +string(travel_dist, format = '(f4.2)')+' AU'
+	dist_string = +string(travel_dist, format = '(f4.2)')
+
+	t0_error = perror[1]*(24.0*60.) ;Release time error in minutes
+	s_error = perror[0]/day_frac_lt
 	
-	box_message, str2arr('Estimated ' +particle_type+ ' release time from:,'+ t_release + ' UT, ,Estimated '+particle_type+ ' travel distance:,'+dist_string)
+	box_message, str2arr('Estimated ' +particle_type+ ' release time from:,'$
+						+ t_release + ' UT (+/- '+string(t0_error, format='(f4.1)')+' min), ,Estimated ' $
+						+ particle_type+ ' travel distance:,'$
+						+ dist_string + ' +/- '+ string(s_error, format='(f4.2)') + ' AU' )
+
+	chisqr_prob = chisqr_pdf(bestnorm, dof)*100.0
+	box_message, str2arr('Probability of better chi-square:, '+string(chisqr_prob, format = '(f5.2)' )+' %')
+
 
 	;----------------------------------------------------------;
 	;		 Write ASCII file containing event info	 		   ;
