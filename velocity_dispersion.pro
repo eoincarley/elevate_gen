@@ -1,3 +1,47 @@
+pro manual_detection, date, ints, average_window, tonset, $
+				onset_times = onset_times, plot_sep = plot_sep
+
+
+	plot_sep_zoom = "utplot, date, ints, /noerase, /xs, /ys, yr = yzoom, xr=xzoom, /ylog, ytitle = 'Intensity (cm!U-2!N sr!U-1!N s!U-1!N MeV!U-1!N)', xticklen = 1.0, xgridstyle = 1.0, yticklen = 1.0, ygridstyle = 1.0, /normal"
+	print, 'Choose region of zoom: '
+	cursor, t_zoom_point, i_zoom_point, /data
+
+	; Choose 1 hr around this window.
+	t0_zoom	= t_zoom_point - 1.0*60.*60.
+	t1_zoom	= t_zoom_point + 2.0*60.*60.
+	xzoom = [t0_zoom, t1_zoom]
+
+	i0_zoom = i_zoom_point - i_zoom_point*0.25
+	i1_zoom = i_zoom_point + 1e4
+	yzoom = [i0_zoom, i1_zoom]
+
+	window, 3, xs=400, ys=400
+	junk = execute(plot_sep_zoom)
+
+	ints_zoom = ints[ where(date gt t0_zoom and date lt t1_zoom) ]
+	date_zoom = date[ where(date gt t0_zoom and date lt t1_zoom) ]
+	
+	i_mean = mean(  ints[ where(date gt t0_zoom and date lt t_zoom_point) ] )
+	i_stdv = stdev( ints[ where(date gt t0_zoom and date lt t_zoom_point) ] )
+
+	mean_line = ints_zoom
+	mean_line[*] = i_mean
+	sd_line = ints_zoom
+	sd_line[*] = i_stdv
+
+	set_line_color
+	plots, date_zoom, i_mean, color=3
+	plots, date_zoom, i_mean + 3.0*i_stdv, linestyle=3, color=5
+	
+	print, 'Choose onset: '
+	cursor, tonset, i_junk, /data
+
+	print, 'Onset time: ' + anytim(tonset, /cc)
+
+	stop
+END
+
+
 pro sigma_detection, date, ints, onset, average_window, $
 				onset_times = onset_times, plot_sep = plot_sep
 
@@ -23,7 +67,7 @@ pro sigma_detection, date, ints, onset, average_window, $
 		time_sub = date[t0_index:t1_index]
 
 		plots, time_sub, ints_sub, /data, color=5
-			;plots, erne_date[t1_index+1], ints[t1_index+1], /data, psym=4, symsize=3, color=4	
+		;plots, erne_date[t1_index+1], ints[t1_index+1], /data, psym=4, symsize=3, color=4	
 
 		ints_mean = mean( ints_sub )
 		ints_sdev = stdev( ints_sub ) > 0.05*ints_mean 
@@ -103,7 +147,7 @@ pro cusum_detection, date, ints, average_window, $
 	pass=1
 	for j=1, n_elements(ints)-5 do begin
 
-		sum = 0.0;total(ints[0:j])
+		sum = 0.0	;total(ints[0:j])
 		sum = max([0, ints[j+1] - k + sum])
 		
 		plots, date[j], [sum], /data, psym=1, symsize=1, color=7
@@ -128,13 +172,13 @@ pro cusum_detection, date, ints, average_window, $
 
 END
 
-					;**********************************************************;
-					;					MASTER CODE BELOW		               ;
-					;**********************************************************;
+			;**********************************************************;
+			;					MASTER CODE BELOW		               ;
+			;**********************************************************;
 
 
 pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epam_e, $
-						write_info = write_info, cusum = cusum
+						write_info = write_info, sigma=sigma, cusum = cusum, manual = manual
 
 ;+
 ;
@@ -178,7 +222,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	!p.charsize = 1.5
 	event_folder = '/Users/eoincarley/ELEVATE/data/' +date_folder+ '/'
 	ace_folder = event_folder + 'ACE/'
-	soho_folder = event_folder + 'SOHO/ERNE/'
+	soho_folder = event_folder + 'ERNE/'
 
 	yrange = '[1e-4, 1e4]'		; To be used in case that CUSUM method is chosen and particle counts are used.		 
 
@@ -303,7 +347,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 
 
 	for channel=chan_start, chan_end, chan_step do begin		; Loop through energy channels
-		window, 0, xs=1500, ys=800
+		window, 0, xs=900, ys=500
 		good = where(particle_data[channel, *] gt 0.0)
 		if good[0] ne -1 then begin
 			ints = smooth(particle_data[channel, good], smooth_param)		; Smoothness is an important parameter
@@ -318,11 +362,15 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 			;----------------------------------------------------------;
 			;		     Choose detection method here 		  		   ;
 			
-			if ~keyword_set(cusum) then sigma_detection, date, ints, tonset, average_window, $
+			if keyword_set(sigma) then sigma_detection, date, ints, tonset, average_window, $
 							onset_times = onset_times, plot_sep = plot_sep
 
 			if keyword_set(cusum) then cusum_detection, date, ints, average_window, $
 							tonset, onset_times = onset_times, plot_sep = plot_sep	
+			
+			if keyword_set(manual) then manual_detection, date, ints, average_window, $
+							tonset, onset_times = onset_times, plot_sep = plot_sep				
+
 			;
 			;----------------------------------------------------------;						
 
@@ -359,6 +407,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	rest_E = p_mass*(c^2.0)  	 ;J
 	c_fraction = sqrt(1.0 - (rest_E/(kin_e + rest_E))^2.0)
 
+	wset, 0
 	plot, 1.0/[c_fraction], [day_fraction], $
 		/xs, $
 		/ys, $
@@ -381,7 +430,6 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 
 	;----------------- Fitting --------------------;
 	result = linfit(1.0/[c_fraction], [day_fraction], yfit = yfit)	
-	oplot, 1.0/[c_fraction], yfit
 
 	start = [0.0087, result[0]]		;[slope, intercept] ;Start of with 1.5 AU 
 	fit = 'p[0]*x + p[1]'
@@ -402,6 +450,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 					perror = perror, $
 					bestnorm = bestnorm, $
 					dof=dof)
+	oplot, 1.0/[c_fraction], yfit
 
 	t_release = p[1]*(24.0*60.*60.0) + day_start
 	t_release = anytim(t_release, /cc)
