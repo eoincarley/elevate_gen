@@ -118,21 +118,27 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
 
    f_mid = n_array[where(n_array ne f_max and n_array ne f_min)]
 
-   case f_max of
-      0: max_tim = t_str_a
-      1: max_tim = t_str_b
-      2: max_tim = t_str_c
-   endcase
-   case f_min of
-      0: min_tim = t_str_a
-      1: min_tim = t_str_b
-      2: min_tim = t_str_c
-   endcase
-   case f_mid of
-      0: mid_tim = t_str_a
-      1: mid_tim = t_str_b
-      2: mid_tim = t_str_c
-   endcase
+   if f_min eq f_max then begin
+         max_tim = t_str_a
+         mid_tim = t_str_b
+         min_tim = t_str_c
+   endif else begin
+      case f_max of
+         0: max_tim = t_str_a
+         1: max_tim = t_str_b
+         2: max_tim = t_str_c
+      endcase
+      case f_min of
+         0: min_tim = t_str_a
+         1: min_tim = t_str_b
+         2: min_tim = t_str_c
+      endcase
+      case f_mid of
+         0: mid_tim = t_str_a
+         1: mid_tim = t_str_b
+         2: mid_tim = t_str_c
+      endcase
+   endelse
 
 
    ; This loop finds the closest file to min_tim[n] for each of the filters. It constructs an
@@ -148,21 +154,27 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
       if n eq 0 then next_mid_im = loc_mid else next_mid_im = [next_mid_im, loc_mid]
    endfor
 
-   case f_max of
-      0: loc_211 = next_max_im
-      1: loc_193 = next_max_im
-      2: loc_171 = next_max_im
-   endcase
-   case f_mid of
-      0: loc_211 = next_mid_im
-      1: loc_193 = next_mid_im
-      2: loc_171 = next_mid_im
-   endcase
-   case f_min of
-      0: loc_211 = next_min_im
-      1: loc_193 = next_min_im
-      2: loc_171 = next_min_im
-   endcase
+   if f_min eq f_max then begin
+         loc_211 = next_max_im
+         loc_193 = next_mid_im
+         loc_171 = next_min_im
+   endif else begin
+      case f_max of
+         0: loc_211 = next_max_im
+         1: loc_193 = next_max_im
+         2: loc_171 = next_max_im
+      endcase
+      case f_mid of
+         0: loc_211 = next_mid_im
+         1: loc_193 = next_mid_im
+         2: loc_171 = next_mid_im
+      endcase
+      case f_min of
+         0: loc_211 = next_min_im
+         1: loc_193 = next_min_im
+         2: loc_171 = next_min_im
+      endcase
+   endelse  
 
    fls_211 = f_a[loc_211]
    fls_193 = f_b[loc_193]

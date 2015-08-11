@@ -16,7 +16,8 @@ pro aia_process_image, img_name, img_pre_name, hdr, hdr_pre, $
 
       iscaled_img = img/img_pre
       ;iscaled_img = rebin(iscaled_img, xsize, xsize)
-      undefine, img, img_pre
+      undefine, img
+      undefine, img_pre
 
       if keyword_set(nrgf) then begin
          read_sdo, img_name, hdr, junk, outsize=2048

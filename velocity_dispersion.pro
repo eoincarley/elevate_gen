@@ -29,7 +29,7 @@ pro sigma_detection, date, ints, onset, average_window, $
 		ints_sdev = stdev( ints_sub ) > 0.05*ints_mean 
 			;if i mod 10 eq 0 then print, ints_sdev/ints_mean
 
-		dummy_img = dist(350, 800)
+		dummy_img = dist(450, 800)
 		dummy_img[*] = 0.0
 		tv, dummy_img	
 
@@ -196,7 +196,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	erne_energies = ['1.68', '1.97', '2.41', '2.98', '3.70', '4.71', $
 					 '5.72', '7.15', '9.09', '11.4', '15.4', '18.9', $ 
 					 '23.3', '29.1', '36.4', '45.6', '57.4', '72.0', $
-					 '90.5', '108']		;MeV
+					 '90.4', '108']		;MeV
 	
 	for i=0, n_elements(erne_data[0, *])-1 do begin
 		
@@ -221,7 +221,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		endelse
 
 		chan_inds = ((indgen(19)*(22 - 3)/18 ) + 3)*2
-		start_energy = '23.9'
+		start_energy = '1.68'
 		end_energy = '108'
 		particle_data = erne_data
 		particle_date = erne_date
@@ -232,9 +232,12 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		chan_energies = erne_energies
 		instrument = 'SOHO ERNE PROTONS'
 		particle_type = 'proton'
-		smooth_param = 2
-		average_window = 420.0
+		smooth_param = 5
+		average_window = 240.0
 		detection_time_err = 10.0 	; minutes
+
+		param_struct = {name:instrument, start_date:particle_date[0], energy_range:[start_energy, end_energy], smooth_param:smooth_param, average_window:average_window}
+		save, param_struct, filename=soho_folder+'params_for_vda.sav', description = 'Paramaeters used in the VDA for this event'
 
 	endif
 
@@ -267,9 +270,12 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		chan_energies = ace_ps[p_index]
 		instrument = 'ACE EPAM ELECTRONS'
 		particle_type = 'electron'
-		smooth_param = 5
+		smooth_param = 1
 		average_window = 240.0
 		detection_time_err = 5.0 	; minutes
+
+		param_struct = {name:instrument, date:particle_date[0], smooth_param:smooth_param, average_window:average_window}
+		save, param_struct, filename=ace_folder+'params_for_vda.sav', description = 'Paramaeters used in the VDA of for this event'
 
 	endif	
 
@@ -277,15 +283,15 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 
 		particle_data = epam_protons
 		particle_date = epam_data[0, *]
-		chan_start = 0
+		chan_start = 6
 		chan_end = 10
 		chan_step = 1
 		chan_name = 0	;for indexing erne_energies
 		chan_energies = ace_ps[p_index]
 		instrument = 'ACE EPAM PROTONS'
 		particle_type = 'proton'
-		smooth_param = 30
-		average_window = 180.0
+		smooth_param = 1
+		average_window = 480.0
 		detection_time_err = 5.0 	; minutes
 
 
@@ -386,7 +392,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	par_lim(0).limits(0) = 0.00578	;Constrians travel dist to be greater than 1.0 AU
 
 	par_lim(0).limited(1) = 1 		;Activate upper boundary
-	par_lim(0).limits(1) = 0.017	;Constrians travel dist to be less than 3.0 AU
+	par_lim(0).limits(1) = 0.0156	;Constrians travel dist to be less than 3.0 AU
 
 	p = mpfitexpr(fit, 1.0/[c_fraction], [day_fraction], $
 					yerr, $
@@ -401,7 +407,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	t_release = anytim(t_release, /cc)
 
 	day_frac_lt = 8.33/(24.0*60.0) 	; Day fraction of light travel time
-	travel_dist = result[1]/day_frac_lt
+	travel_dist = p[0]/day_frac_lt
 	dist_string = +string(travel_dist, format = '(f4.2)')
 
 	t0_error = perror[1]*(24.0*60.) ;Release time error in minutes
@@ -413,7 +419,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 						+ dist_string + ' +/- '+ string(s_error, format='(f4.2)') + ' AU' )
 
 	chisqr_prob = chisqr_pdf(bestnorm, dof)*100.0
-	box_message, str2arr('Probability of better chi-square:, '+string(chisqr_prob, format = '(f5.2)' )+' %')
+	box_message, str2arr('Probability of better chi-square:,'+string(chisqr_prob, format = '(f5.2)' )+' %')
 
 
 	;----------------------------------------------------------;
