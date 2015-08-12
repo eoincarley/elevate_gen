@@ -1,18 +1,19 @@
 pro manual_detection, date, ints, average_window, tonset, $
 				onset_times = onset_times, plot_sep = plot_sep
 
+	; manual_detection_linfit in a seperate .pro file is also an option here 
 
 	plot_sep_zoom = "utplot, date, ints, /noerase, /xs, /ys, yr = yzoom, xr=xzoom, /ylog, ytitle = 'Intensity (cm!U-2!N sr!U-1!N s!U-1!N MeV!U-1!N)', xticklen = 1.0, xgridstyle = 1.0, yticklen = 1.0, ygridstyle = 1.0, /normal"
 	print, 'Choose region of zoom: '
 	cursor, t_zoom_point, i_zoom_point, /data
 
 	; Choose 1 hr around this window.
-	t0_zoom	= t_zoom_point - 1.0*60.*60.
-	t1_zoom	= t_zoom_point + 2.0*60.*60.
+	t0_zoom	= t_zoom_point - 2.0*60.*60.
+	t1_zoom	= t_zoom_point + 5.0*60.*60.
 	xzoom = [t0_zoom, t1_zoom]
 
 	i0_zoom = i_zoom_point - i_zoom_point*0.25
-	i1_zoom = i_zoom_point + 1e4
+	i1_zoom = i_zoom_point + i_zoom_point*2.5
 	yzoom = [i0_zoom, i1_zoom]
 
 	window, 3, xs=400, ys=400
@@ -38,7 +39,6 @@ pro manual_detection, date, ints, average_window, tonset, $
 
 	print, 'Onset time: ' + anytim(tonset, /cc)
 
-	stop
 END
 
 
@@ -85,7 +85,7 @@ pro sigma_detection, date, ints, onset, average_window, $
 			PSYM = 10, $ 
    			XTITLE = 'Particle Intensity', $
    			YTITLE = 'Density per Bin', $
-   			pos = [0.05, 0.55, 0.3, 0.95], $
+   			pos = [0.07, 0.6, 0.35, 0.95], $
    			/normal, $
    			/noerase
    													;----------------------------------------------------------;
@@ -178,7 +178,8 @@ END
 
 
 pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epam_e, $
-						write_info = write_info, sigma=sigma, cusum = cusum, manual = manual
+						write_info = write_info, $
+						sigma=sigma, cusum = cusum, manual = manual, mlinfit = mlinfit
 
 ;+
 ;
@@ -265,8 +266,8 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		endelse
 
 		chan_inds = ((indgen(19)*(22 - 3)/18 ) + 3)*2
-		start_energy = '1.68'
-		end_energy = '108'
+		start_energy = '15.4'
+		end_energy = '57.4'
 		particle_data = erne_data
 		particle_date = erne_date
 		chan_start = (chan_inds[where(erne_energies eq start_energy)])[0] + count_on
@@ -276,8 +277,8 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		chan_energies = erne_energies
 		instrument = 'SOHO ERNE PROTONS'
 		particle_type = 'proton'
-		smooth_param = 5
-		average_window = 240.0
+		smooth_param = 30
+		average_window = 420.0
 		detection_time_err = 10.0 	; minutes
 
 		param_struct = {name:instrument, start_date:particle_date[0], energy_range:[start_energy, end_energy], smooth_param:smooth_param, average_window:average_window}
@@ -304,7 +305,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 
 	if keyword_set(epam_e) then begin	
 		
-		yrange = '[1e-2, 1e6]'
+		yrange = '[1e0, 1e7]'
 		particle_data = epam_electrons
 		particle_date = epam_data[0, *]
 		chan_start = 0
@@ -314,8 +315,8 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		chan_energies = ace_ps[p_index]
 		instrument = 'ACE EPAM ELECTRONS'
 		particle_type = 'electron'
-		smooth_param = 1
-		average_window = 240.0
+		smooth_param = 5
+		average_window = 120.0
 		detection_time_err = 5.0 	; minutes
 
 		param_struct = {name:instrument, date:particle_date[0], smooth_param:smooth_param, average_window:average_window}
@@ -369,7 +370,10 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 							tonset, onset_times = onset_times, plot_sep = plot_sep	
 			
 			if keyword_set(manual) then manual_detection, date, ints, average_window, $
-							tonset, onset_times = onset_times, plot_sep = plot_sep				
+							tonset, onset_times = onset_times, plot_sep = plot_sep
+
+			if keyword_set(mlinfit) then manual_detection_linfit, date, ints, average_window, $
+							tonset, onset_times = onset_times, plot_sep = plot_sep								
 
 			;
 			;----------------------------------------------------------;						
