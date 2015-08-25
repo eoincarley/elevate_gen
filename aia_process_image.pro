@@ -29,7 +29,7 @@ pro aia_process_image, img_name, img_pre_name, hdr, hdr_pre, $
       endif else begin
 
          ;iscaled_img = ( iscaled_img - mean(iscaled_img) ) /stdev(iscaled_img)
-         iscaled_img = iscaled_img > 0.85 < 1.15
+         iscaled_img = iscaled_img > 0.85 < 1.1
 
       endelse
 

@@ -4,6 +4,16 @@ pro define_ecliptic
 	str = dblarr(nlines)
 	str[*] = 2.5
 
+<<<<<<< HEAD
+	lat0 = 85.0
+	lat1 = 95.0
+	stth = ( dindgen(nlines)*(lat1 - lat0)/(nlines-1.) ) + lat0
+	stth[*] = 0.0 ;stth*!dtor
+	new_stth = stth
+
+	lon0 = 	-90.0
+	lon1 =   90.0
+=======
 	lat0 = 89.0
 	lat1 = 91.0
 	stth = ( dindgen(nlines)*(lat1 - lat0)/(nlines-1.) ) + lat0
@@ -11,6 +21,7 @@ pro define_ecliptic
 
 	lon0 = -180.0
 	lon1 = 180.0
+>>>>>>> 0f827ac53b612148ffcced3336ae285294a930c6
 	stph = ( dindgen(nlines)*(lon1 - lon0)/(nlines-1.) ) + lon0
 	stph = stph*!dtor
 
@@ -27,6 +38,16 @@ pro define_ecliptic
 	;------------------------------------
 
 	ptr_deg = ptr
+<<<<<<< HEAD
+	ptth_deg = ptth*!radeg*10.0
+	ptph_deg = (ptph + 180.0)*!radeg*10.0
+
+	pfss_mag_create, magout, 3, 180.0, 2, file='synop_Ml_0.2100.fits'
+	plot_image, magout > (-100) < 200
+
+	set_line_color
+	for i=0, 199 do plots, ptph[*, i]/10.0 + 180.0, ptth[*, i]/10.0, psym=3, /data, color=3
+=======
 	ptth_deg = ptth*!radeg
 	ptph_deg = (ptph)*!radeg + 180.0
 
@@ -36,5 +57,6 @@ pro define_ecliptic
 
 	set_line_color
 	for i=0, 199 do plots, ptph_deg[*, i], ptth_deg[*, i]*10.0, psym=3, /data, color=3
+>>>>>>> 0f827ac53b612148ffcced3336ae285294a930c6
 
 END
