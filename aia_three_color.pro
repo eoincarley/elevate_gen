@@ -41,6 +41,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
    pass_c = '171'
 
    folder = '~/Data/elevate_db/'+date+'/SDO/AIA'
+   ;folder = '~/Data/'+date+'/sdo'
 
    file_loc_211 = folder + '/211'
    file_loc_193 = folder + '/193'
@@ -241,9 +242,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
          iscaled_c = oBridge3->GetVar('iscaled_c')
 
       ENDIF ELSE BEGIN
-         aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size;, /nrgf
-         aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size;, /nrgf
-         aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size;, /nrgf
+         aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size
+         aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size
+         aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size
       ENDELSE
      
       ; Check that the images are closely spaced in time
@@ -268,10 +269,14 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
       stamp_date, i_a, i_b, i_c
 
       if ~keyword_set(xwin) then begin
-         img = tvrd(/true)
-         write_png, 'SDO_3col_plain_'+time2file(i_a.t_obs, /sec)+'.png', img   
+        img = tvrd(/true)
+	; write_png, 'SDO_3col_plain_'+time2file(i_a.t_obs, /sec)+'.png', img
+	 
+	image_loc_name = folder + '/image_'+string(i-5, format='(I03)' )+'.png' 
+	write_png, image_loc_name, img
       endif else x2png, folder + '/image_'+string(i-5, format='(I03)' )+'.png'
 	      
+      
       ; If images too far apart in time then go to here.
       skip_img:
 
@@ -284,7 +289,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
    endfor
 
    date = time2file(i_a.t_obs, /date_only)
-   movie_type = '3col_ratio_nrgf' ;else movie_type = '3col_ratio'
+   movie_type = '3col_ratio' ;else movie_type = '3col_ratio'
    cd, folder
    print, folder
    spawn, 'ffmpeg -y -r 25 -i image_%03d.png -vb 50M SDO_AIA_'+date+'_'+movie_type+'.mpg'

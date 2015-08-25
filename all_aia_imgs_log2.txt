@@ -1,8 +1,0 @@
- 
-Filesystem   Size   Used  Avail Capacity   iused     ifree %iused  Mounted on
-/dev/disk1   3.0T   1.1T   1.9T    38% 272215784 460051762   37%   /
- 
- 
-Filesystem   Size   Used  Avail Capacity   iused     ifree %iused  Mounted on
-/dev/disk1   3.0T   1.1T   1.9T    38% 272215784 460051762   37%   /
- 
