@@ -14,19 +14,121 @@ pro return_struct, bridge, struct_name, struct
 
 END
 
-pro stamp_date, i_a, i_b, i_c
+pro stamp_date_aia, i_a, i_b, i_c
    set_line_color
    !p.charsize = 1.8
 
-   xyouts, 0.02, 0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
-   xyouts, 0.02, 0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
+   xyouts, 0.02, 0.07, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=2
+   xyouts, 0.02, 0.07, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
    
-   xyouts, 0.02, 0.04, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
-   xyouts, 0.02, 0.04, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
+   xyouts, 0.02, 0.045, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=2
+   xyouts, 0.02, 0.045, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
    
-   xyouts, 0.02, 0.02, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
+   xyouts, 0.02, 0.02, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=2
    xyouts, 0.02, 0.02, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
 END
+
+pro stamp_date_nrh, nrh0, nrh1, nrh2
+   set_line_color
+   !p.charsize = 1.8
+
+   xyouts, 0.52, 0.07, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
+   xyouts, 0.52, 0.07, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
+   
+   xyouts, 0.52, 0.045, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
+   xyouts, 0.52, 0.045, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
+   
+   xyouts, 0.52, 0.02, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
+   xyouts, 0.52, 0.02, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
+END
+
+pro plot_nrh_tri_color, aia_time, freqs, x_size, y_size, $
+         hdr_freqs = hdr_freqs
+
+   ;x_size = 8.*128
+   ;y_size = 8.*128
+
+   t0 = anytim(aia_time, /utim)
+
+   t0str = anytim(t0, /yoh, /trun, /time_only)
+
+   cd, '~/Data/2014_apr_18/radio/nrh/'
+   filenames = findfile('*.fts')
+
+
+   read_nrh, filenames[freqs[0]], $
+         nrh_hdr0, $
+         nrh_data0, $
+         hbeg=t0str;, $ 
+         ;hend=t1str
+
+   read_nrh, filenames[freqs[1]], $
+         nrh_hdr1, $
+         nrh_data1, $
+         hbeg=t0str
+
+   read_nrh, filenames[freqs[2]], $
+         nrh_hdr2, $
+         nrh_data2, $
+         hbeg=t0str
+
+   max_value0 = max(nrh_data0)
+   max_value1 = max(nrh_data1)
+   max_value2 = max(nrh_data2)
+
+   max_value = max([nrh_data0, nrh_data1, nrh_data2])
+
+   nrh_data0 = nrh_data0 > max_value*0.3 < max_value*0.7
+   nrh_data1 = nrh_data1 > max_value*0.3 < max_value*0.7
+   nrh_data2 = nrh_data2 > max_value*0.3 < max_value*0.7 
+
+   xcen = nrh_hdr0.crpix1
+   ycen = nrh_hdr0.crpix2
+
+   truecolorim = [[[nrh_data0]], [[nrh_data1]], [[nrh_data2]]]
+
+   ; 31 pixels per radius. Want to have FOV as 1.3 Rsun (same as AIA). So ~31*1.3 = 40.3
+   ; Have 40.3 pixels on either side of image center to have FOV of 1.3 Rsun. 
+
+   pix_fov = nrh_hdr0.solar_r*1.4
+
+   truecolorim_zoom = [[[nrh_data0[xcen-pix_fov:xcen+pix_fov, ycen-pix_fov:ycen+pix_fov]]], $
+                       [[nrh_data1[xcen-pix_fov:xcen+pix_fov, ycen-pix_fov:ycen+pix_fov]]], $
+                       [[nrh_data2[xcen-pix_fov:xcen+pix_fov, ycen-pix_fov:ycen+pix_fov]]]]
+
+   img_origin = [-1.0*x_size/2, -1.0*y_size/2]
+
+   img = congrid(truecolorim, x_size, y_size, 3)
+   im_zoom = congrid(truecolorim_zoom, x_size, y_size, 3)
+
+   xposition = x_size+40
+   expand_tv, im_zoom, x_size, y_size, xposition, 10, true = 3, origin = img_origin, /data
+
+   naxis1 = pix_fov*2.0
+   naxis2 = pix_fov*2.0
+
+   pixrad = (1.0d*x_size/naxis1)*nrh_hdr0.solar_r
+   xcen = (1.0d*x_size/naxis1)*(naxis1/2.0)
+   ycen = (1.0d*x_size/naxis2)*(naxis2/2.0)
+   tvcircle, pixrad, xcen+xposition, ycen+10, /device
+
+   index2map, nrh_hdr0, nrh_data0, map0
+   mapb0 = map0.b0
+   maprsun = nrh_hdr0.solar_r
+   mapl0 = map0.l0
+
+   plot_helio, nrh_hdr0.date_obs, grid=15, /over, b0=mapb0, rsun=pixrad, l0=mapl0, gthick=2
+
+   stamp_date_nrh, nrh_hdr0, nrh_hdr1, nrh_hdr2
+   hdr_freqs = [nrh_hdr0.freq, nrh_hdr1.freq, nrh_hdr2.freq]
+   hdr_freqs = string(hdr_freqs, format='(I03)')
+
+   date = time2file(t0, /date_only)
+   freq_string = string(nrh_hdr0.freq, format='(I03)') + '_'+ string(nrh_hdr1.freq, format='(I03)') + '_' +string(nrh_hdr2.freq, format='(I03)')
+
+
+END
+
 
 ;--------------------------------------------------------------------;
 ;
@@ -34,7 +136,7 @@ END
 ;
 ;--------------------------------------------------------------------;
 
-pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, parallelise=parallelise, winnum=winnum
+pro aia_nrh_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, parallelise=parallelise, winnum=winnum
      
    pass_a = '211'
    pass_b = '193'
@@ -76,8 +178,8 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
    endif else begin
      x_range = [0, 4095]
      y_range = [0, 4095]
-     x_size = 4096
-     y_size = 4096
+     x_size = 700
+     y_size = 700
    endelse
 
    ; Check the images to make sure we're not using AEC-affected images
@@ -88,6 +190,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
    read_sdo, fls_a, i_a, /nodata, only_tags='exptime,date-obs', /mixed_comp, /noshell
    f_a = fls_a[where(i_a.exptime gt min_exp_t_211)]
    t = anytim(i_a.date_d$obs)
+   t211 = anytim(i_a.date_d$obs)
    t_a = t[where(i_a.exptime gt min_exp_t_211)]
 
    read_sdo, fls_b, i_b, /nodata, only_tags='exptime,date-obs', /mixed_comp, /noshell
@@ -183,7 +286,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
 
    ; Setup plotting parameters  
    if keyword_set(xwin) then begin
-      window, winnum, xs = x_size, ys = y_size, retain=2
+      window, winnum, xs = x_size + x_size+60.0, ys = y_size+20, retain=2
       !p.multi = 0
    endif else begin     
       set_plot, 'z'
@@ -192,9 +295,14 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
       device, set_resolution = [x_size, y_size], set_pixel_depth=24, decomposed=0
    endelse
 
-   lwr_lim = 5
+   read_sdo, fls_211, hdr_aia, /nodata, only_tags='date-obs', /mixed_comp, /noshell
+   tims_aia = anytim(hdr_aia.date_d$obs)
+   index_start = closest(tims_aia, anytim('2014-04-18T12:48', /utim))
+   index_stop = closest(tims_aia, anytim('2014-04-18T13:15', /utim))
 
-   for i = lwr_lim, n_elements(fls_211) - 1 do begin
+  
+   image_index = 0
+   for i = index_start, index_stop do begin
       
       get_utc, start_loop_t, /cc
       
@@ -242,9 +350,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
          iscaled_c = oBridge3->GetVar('iscaled_c')
 
       ENDIF ELSE BEGIN
-         aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size
-         aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size
-         aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size
+         aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /nrgf
+         aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /nrgf
+         aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /nrgf
       ENDELSE
      
       ; Check that the images are closely spaced in time
@@ -254,50 +362,69 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
 
       truecolorim = [[[iscaled_a]], [[iscaled_b]], [[iscaled_c]]]
 
+      undefine, iscaled_a
+      undefine, iscaled_b
+      undefine, iscaled_c
+
       if keyword_set(zoom) then $
         img = congrid(truecolorim[x_range[0]:x_range[1],y_range[0]:y_range[1], *], x_size, y_size, 3) else $
-           img = rebin(truecolorim, x_size, y_size, 3)
+           img = congrid(truecolorim, x_size, y_size, 3)
 
-      expand_tv, img, x_size, y_size, 0, 0, true = 3;, min = -3.0, max = 3.0;, origin=img_origin, scale=img_scale, /data
-      ;if keyword_set(grid) then plot_helio, i_a1[0].date_d$obs, grid=15, /over, b0=map.b0, rsun=map.rsun, l0=map.l0, gthick=thicky
+      undefine, truecolorim
+      
+      aia_prep, fls_211[i], -1, i_0, d_0, /uncomp_delete, /norm
+      index2map, i_0, d_0, map0
+      mapb0 = map0.b0
+      maprsun = map0.rsun
+      mapl0 = map0.l0
 
-      pixrad = (1.0d*x_size/i_a.naxis1)*i_a.r_sun
+
+      img_origin = [-1.0*x_size/2 - mapb0, -1.0*y_size/2]
+      expand_tv, img, x_size, y_size, 10, 10, true = 3, origin =img_origin, /data
+
+      undefine, map0
+      undefine, map
+   
+      pixrad = (1.0d*x_size/i_a.naxis1/2)*i_a.r_sun      ;Use divide by 2 here because nrgf uses 2048 image to cut down on computation time.
       xcen = (1.0d*x_size/i_a.naxis1)*i_a.crpix1
       ycen = (1.0d*x_size/i_a.naxis2)*i_a.crpix2
-      tvcircle, pixrad, xcen, ycen, /device
+      tvcircle, pixrad, xcen+10, ycen+10, /device
 
-      stamp_date, i_a, i_b, i_c
+      plot_helio, i_0[0].date_d$obs, grid=15, /over, b0=mapb0, rsun=pixrad, l0=mapl0, gthick=2
+
+      stamp_date_aia, i_a, i_b, i_c
+
+      ;--------------------------------------------;
+      ;         Plot NRH three colour
+      ;
+      plot_nrh_tri_color, i_a.t_obs, [0,4,8], x_size, y_size, $
+                     hdr_freqs = hdr_freqs
+      ;
+      ;
+      ;--------------------------------------------;
 
       if ~keyword_set(xwin) then begin
-        img = tvrd(/true)
-	; write_png, 'SDO_3col_plain_'+time2file(i_a.t_obs, /sec)+'.png', img
-	 
-   	image_loc_name = folder + '/image_'+string(i-5, format='(I03)' )+'.png' 
-	   write_png, image_loc_name, img
-      endif else x2png, folder + '/image_'+string(i-5, format='(I03)' )+'.png'
+      	image_loc_name = '~/Data/2014_apr_18/image_'+string(image_index, format='(I03)' )+'.png' 
+   	   write_png, image_loc_name, img
+      endif else x2png, '~/Data/2014_apr_18/image_'+string(image_index, format='(I03)' )+'.png'
 	      
-      
+      image_index = image_index + 1
       ; If images too far apart in time then go to here.
       skip_img:
 
+      ; Indicate progress
       get_utc, end_loop_t, /cc
       loop_time = anytim(end_loop_t, /utim) - anytim(start_loop_t, /utim)
-      print,'-------------------'
-      print,'Currently '+string(loop_time, format='(I04)')+' seconds per 3 color image.'
-      print,'-------------------'
+      box_message, str2arr('Currently '+string(loop_time, format='(I04)') + ' s per 3 color image.')
+      progress_percent, i, index_start, index_stop
 
    endfor
 
    date = time2file(i_a.t_obs, /date_only)
    movie_type = '3col_ratio' ;else movie_type = '3col_ratio'
-   cd, folder
+   cd, '~/Data/2014_apr_18/'
    print, folder
-   spawn, 'ffmpeg -y -r 25 -i image_%03d.png -vb 50M SDO_AIA_'+date+'_'+movie_type+'.mpg'
-
-
-   spawn, 'cp SDO_AIA_'+date+'_'+movie_type+'.mpg ~/Dropbox/sdo_movies/'
-   ;spawn, 'cp image_000.png ~/Dropbox/sdo_movies/'
-   spawn, 'rm -f image*.png'
-
+   spawn, 'ffmpeg -y -r 25 -i image_%03d.png -vb 50M AIA_NRH_'+hdr_freqs[0]+'_'+hdr_freqs[1]+'_'+hdr_freqs[2]+'_scl3.mpg'
+   ;spawn, 'rm -f image*.png'
 
 END
