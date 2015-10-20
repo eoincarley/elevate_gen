@@ -1,3 +1,21 @@
+pro setup_ps, name, xsize, ysize
+
+   set_plot,'ps'
+   !p.font=0
+   !p.charsize=1.0
+   device, filename = name, $
+          ;/decomposed, $
+          /color, $
+          /helvetica, $
+          /inches, $
+          xsize=xsize/100, $
+          ysize=xsize/100, $
+          /encapsulate, $
+          bits_per_pixel=16, $
+          yoffset=5
+
+end
+
 pro return_struct, bridge, struct_name, struct
 
       ; IDL bridges cannot pass structures I/O. This procedure works around that.
@@ -16,16 +34,18 @@ END
 
 pro stamp_date, i_a, i_b, i_c
    set_line_color
-   !p.charsize = 1.8
 
-   xyouts, 0.02, 0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
-   xyouts, 0.02, 0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
+   xpos_aia_lab = 0.15
+   ypos_aia_lab = 0.15
+
+   xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
+   xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
    
-   xyouts, 0.02, 0.04, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
-   xyouts, 0.02, 0.04, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
+   xyouts, xpos_aia_lab, ypos_aia_lab+0.025, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
+   xyouts, xpos_aia_lab, ypos_aia_lab+0.025, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
    
-   xyouts, 0.02, 0.02, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
-   xyouts, 0.02, 0.02, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
+   xyouts, xpos_aia_lab, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
+   xyouts, xpos_aia_lab, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
 END
 
 ;--------------------------------------------------------------------;
@@ -34,51 +54,75 @@ END
 ;
 ;--------------------------------------------------------------------;
 
-pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, parallelise=parallelise, winnum=winnum
-     
-   pass_a = '211'
-   pass_b = '193'
-   pass_c = '171'
-
+pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
+            zoom=zoom, parallelise=parallelise, winnum=winnum, $
+            hot = hot, postscript=postscript
+   
+   !p.charsize = 1.0
    folder = '~/Data/elevate_db/'+date+'/SDO/AIA'
-   ;folder = '~/Data/'+date+'/sdo'
+   time_stop = anytim('2014-04-18T13:10:00', /utim)
 
-   file_loc_211 = folder + '/211'
-   file_loc_193 = folder + '/193'
-   file_loc_171 = folder + '/171'
+    if keyword_set(hot) then begin
+       pass_a = '094'
+       pass_b = '131'
+       pass_c = '335'
+
+       file_loc_211 = folder + '/094'
+       file_loc_193 = folder + '/131'
+       file_loc_171 = folder + '/335'
+    endif else begin
+       pass_a = '211'
+       pass_b = '193'
+       pass_c = '171'
+
+       file_loc_211 = folder + '/211'
+       file_loc_193 = folder + '/193'
+       file_loc_171 = folder + '/171'
+    endelse
 
    fls_a = file_search( file_loc_211 +'/*.fits' )
    fls_b = file_search( file_loc_193 +'/*.fits' )
    fls_c = file_search( file_loc_171 +'/*.fits' )
 
+   shrink = 2.   ;shrink image size
 
-   if keyword_set(zoom) then begin
-      ;     x_range = [800, 3000]
-      ;     y_range = [500, 2000]
-      x_range = [2047, 4095]     ; 20110607
-      y_range = [512, 2560]      ; 20110607
-      ;     pix_range_x = [1000, 1600] ; 20120307
-      ;     pix_range_y = [2400, 3000] ; 20120307
-      if (x_range[1]-x_range[0]) gt 1024 or (y_range[1]-y_range[0]) gt 1024 then begin
-         if (x_range[1]-x_range[0]) ge (y_range[1]-y_range[0]) then begin
-            x_size = 1024
-            y_size = round(1024*(float(y_range[1]-y_range[0])/float(x_range[1]-x_range[0])))
-         endif
-         if (x_range[1]-x_range[0]) lt (y_range[1]-y_range[0]) then begin
-            y_size = 1024
-            x_size = round(1024*(float(x_range[1]-x_range[0])/float(y_range[1]-y_range[0])))
-         endif
-      endif else begin
+    if keyword_set(zoom) then begin
+    
+        read_sdo, fls_a[0], i_a, /nodata, only_tags='cdelt1,cdelt2,naxis1,naxis2', /mixed_comp, /noshell   
+        FOV = [16.6, 16.6]
+        CENTER = [500.0, -250.0];[500.0, -350.0]
+        x0 = (CENTER[0]/i_a.cdelt1 + (i_a.naxis1/2.0)) - (FOV[0]*60.0/i_a.cdelt1)/2.0
+        x1 = (CENTER[0]/i_a.cdelt1 + (i_a.naxis1/2.0)) + (FOV[0]*60.0/i_a.cdelt1)/2.0
+        y0 = (CENTER[1]/i_a.cdelt2 + (i_a.naxis2/2.0)) - (FOV[1]*60.0/i_a.cdelt2)/2.0
+        y1 = (CENTER[1]/i_a.cdelt2 + (i_a.naxis2/2.0)) + (FOV[1]*60.0/i_a.cdelt2)/2.0
+        x_range = [x0, x1]    
+        y_range = [y0, y1]      
+
+        if (x_range[1]-x_range[0]) gt 1024 or (y_range[1]-y_range[0]) gt 1024 then begin
+            if (x_range[1]-x_range[0]) ge (y_range[1]-y_range[0]) then begin
+                x_size = 1024
+                y_size = round(1024*(float(y_range[1]-y_range[0])/float(x_range[1]-x_range[0])))
+            endif
+            if (x_range[1]-x_range[0]) lt (y_range[1]-y_range[0]) then begin
+                y_size = 1024
+                x_size = round(1024*(float(x_range[1]-x_range[0])/float(y_range[1]-y_range[0])))
+            endif
+        endif else begin
          x_size = (x_range[1]-x_range[0])
          y_size = (y_range[1]-y_range[0])
-      endelse        
+        endelse        
+        border = 200
+    endif else begin
+        x_range = [0, 4095]
+        y_range = [0, 4095]
+        x_size = 1024
+        y_size = 1024
+        border = 200
+    endelse
 
-   endif else begin
-     x_range = [0, 4095]
-     y_range = [0, 4095]
-     x_size = 4096
-     y_size = 4096
-   endelse
+    x_size = x_size/shrink
+    y_size = y_size/shrink
+
 
    ; Check the images to make sure we're not using AEC-affected images
    min_exp_t_193 = 1.0
@@ -183,121 +227,188 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, zoom=zoom, paralleli
 
    ; Setup plotting parameters  
    if keyword_set(xwin) then begin
-      window, winnum, xs = x_size, ys = y_size, retain=2
+      window, winnum, xs = x_size+border, ys = y_size+border, retain=2
       !p.multi = 0
    endif else begin     
-      set_plot, 'z'
-      !p.multi = 0
-      img = fltarr(3, x_size, y_size)
-      device, set_resolution = [x_size, y_size], set_pixel_depth=24, decomposed=0
+      ;set_plot, 'z'
+      ;!p.multi = 0
+      ;img = fltarr(3, x_size+border, x_size+border)
+      ;device, set_resolution = [x_size+border, x_size+border], set_pixel_depth=24, decomposed=0
+
    endelse
 
-   lwr_lim = 5
+   ;-------------------------------------------------;
+   ;        *********************************
+   ;            Image Loop starts here
+   ;        *********************************
+   ;-------------------------------------------------;
 
-   for i = lwr_lim, n_elements(fls_211) - 1 do begin
+   lwr_lim = 161    ;161 for type III image of initial flare. 260 for type IIIs
+
+    for i = lwr_lim, lwr_lim do begin ;n_elements(fls_211) - 1 do begin
       
-      get_utc, start_loop_t, /cc
-      
-      IF keyword_set(parallelise) THEN BEGIN
-         ;---------- Run processing of three images in parallel using IDL bridges ------------;
-         pref_set, 'IDL_STARTUP', '/Users/eoincarley/idl/.idlstartup',/commit             
-         oBridge1 = OBJ_NEW('IDL_IDLBridge', output='/Users/eoincarley/child1_output.txt') 
-         oBridge1->EXECUTE, '@' + PREF_GET('IDL_STARTUP')   ;Necessary to define startup file because child process has no memory of ssw_path of parent process
-         oBridge1->SetVar, 'fls_211', fls_211
-         oBridge1->SetVar, 'fls_193', fls_193
-         oBridge1->SetVar, 'fls_171', fls_171
-         oBridge1->SetVar, 'i', i
+        get_utc, start_loop_t, /cc
 
-         oBridge2 = OBJ_NEW('IDL_IDLBridge')
-         oBridge2->EXECUTE, '@' + PREF_GET('IDL_STARTUP')
-         oBridge2->SetVar, 'fls_211', fls_211
-         oBridge2->SetVar, 'fls_193', fls_193
-         oBridge2->SetVar, 'fls_171', fls_171
-         oBridge2->SetVar, 'i', i
+        IF keyword_set(parallelise) THEN BEGIN
+            ;---------- Run processing of three images in parallel using IDL bridges ------------;
+            pref_set, 'IDL_STARTUP', '/Users/eoincarley/idl/.idlstartup',/commit             
+            oBridge1 = OBJ_NEW('IDL_IDLBridge', output='/Users/eoincarley/child1_output.txt') 
+            oBridge1->EXECUTE, '@' + PREF_GET('IDL_STARTUP')   ;Necessary to define startup file because child process has no memory of ssw_path of parent process
+            oBridge1->SetVar, 'fls_211', fls_211
+            oBridge1->SetVar, 'fls_193', fls_193
+            oBridge1->SetVar, 'fls_171', fls_171
+            oBridge1->SetVar, 'i', i
 
-         oBridge3 = OBJ_NEW('IDL_IDLBridge')
-         oBridge3->EXECUTE, '@' + PREF_GET('IDL_STARTUP') 
-         oBridge3->SetVar, 'fls_211', fls_211
-         oBridge3->SetVar, 'fls_193', fls_193
-         oBridge3->SetVar, 'fls_171', fls_171
-         oBridge3->SetVar, 'i', i
-         
-         oBridge1 -> Execute, 'aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size', /nowait
+            oBridge2 = OBJ_NEW('IDL_IDLBridge')
+            oBridge2->EXECUTE, '@' + PREF_GET('IDL_STARTUP')
+            oBridge2->SetVar, 'fls_211', fls_211
+            oBridge2->SetVar, 'fls_193', fls_193
+            oBridge2->SetVar, 'fls_171', fls_171
+            oBridge2->SetVar, 'i', i
 
-         oBridge2 -> Execute, 'aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size', /nowait
+            oBridge3 = OBJ_NEW('IDL_IDLBridge')
+            oBridge3->EXECUTE, '@' + PREF_GET('IDL_STARTUP') 
+            oBridge3->SetVar, 'fls_211', fls_211
+            oBridge3->SetVar, 'fls_193', fls_193
+            oBridge3->SetVar, 'fls_171', fls_171
+            oBridge3->SetVar, 'i', i
 
-         oBridge3 -> Execute, 'aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size', /nowait
+            oBridge1 -> Execute, 'aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /ratio', /nowait
 
-         print, 'Waiting for child processes to finish.'
-         WHILE (oBridge1->Status() EQ 1 or oBridge2->Status() EQ 1 or oBridge3->Status() EQ 1) DO BEGIN
-            junk=1
-         ENDWHILE
-   
-         return_struct, oBridge1, 'i_a', i_a
-         return_struct, oBridge2, 'i_b', i_b
-         return_struct, oBridge3, 'i_c', i_c
+            oBridge2 -> Execute, 'aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /ratio', /nowait
 
-         iscaled_a = oBridge1->GetVar('iscaled_a')
-         iscaled_b = oBridge2->GetVar('iscaled_b')
-         iscaled_c = oBridge3->GetVar('iscaled_c')
+            oBridge3 -> Execute, 'aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /ratio', /nowait
 
-      ENDIF ELSE BEGIN
-         aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size
-         aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size
-         aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size
-      ENDELSE
+            print, 'Waiting for child processes to finish.'
+            WHILE (oBridge1->Status() EQ 1 or oBridge2->Status() EQ 1 or oBridge3->Status() EQ 1) DO BEGIN
+                junk=1
+            ENDWHILE
+
+            return_struct, oBridge1, 'i_a', i_a
+            return_struct, oBridge2, 'i_b', i_b
+            return_struct, oBridge3, 'i_c', i_c
+
+            iscaled_a = oBridge1->GetVar('iscaled_a')
+            iscaled_b = oBridge2->GetVar('iscaled_b')
+            iscaled_c = oBridge3->GetVar('iscaled_c')
+
+        ENDIF ELSE BEGIN
+            ;Simply runs processing in series, as opposed to parallel
+            aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /total_b
+            aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /total_b
+            aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /total_b
+        ENDELSE
      
-      ; Check that the images are closely spaced in time
-      if (abs(anytim(i_a.date_d$obs)-anytim(i_b.date_d$obs)) or $
-          abs(anytim(i_a.date_d$obs)-anytim(i_c.date_d$obs)) or $
-          abs(anytim(i_b.date_d$obs)-anytim(i_c.date_d$obs))) gt 12. then goto, skip_img
+        ; Check that the images are closely spaced in time
+        if (abs(anytim(i_a.date_d$obs)-anytim(i_b.date_d$obs)) or $
+            abs(anytim(i_a.date_d$obs)-anytim(i_c.date_d$obs)) or $
+            abs(anytim(i_b.date_d$obs)-anytim(i_c.date_d$obs))) gt 12. then goto, skip_img
 
-      truecolorim = [[[iscaled_a]], [[iscaled_b]], [[iscaled_c]]]
+        truecolorim = [[[iscaled_a]], [[iscaled_b]], [[iscaled_c]]] ;contruct RGB image
 
-      if keyword_set(zoom) then $
+        if keyword_set(zoom) then $
         img = congrid(truecolorim[x_range[0]:x_range[1],y_range[0]:y_range[1], *], x_size, y_size, 3) else $
            img = rebin(truecolorim, x_size, y_size, 3)
 
-      expand_tv, img, x_size, y_size, 0, 0, true = 3;, min = -3.0, max = 3.0;, origin=img_origin, scale=img_scale, /data
-      ;if keyword_set(grid) then plot_helio, i_a1[0].date_d$obs, grid=15, /over, b0=map.b0, rsun=map.rsun, l0=map.l0, gthick=thicky
+                ;expand_tv, img, x_size, y_size, border/2, border/2, true = 3;, min = -3.0, max = 3.0;, origin=img_origin, scale=img_scale, /data
+                ;if keyword_set(grid) then plot_helio, i_a1[0].date_d$obs, grid=15, /over, b0=map.b0, rsun=map.rsun, l0=map.l0, gthick=thicky
+        
+        ;---------------------------;
+        ;       PLOT IMAGE
+        ;---------------------------;
 
-      pixrad = (1.0d*x_size/i_a.naxis1)*i_a.r_sun
-      xcen = (1.0d*x_size/i_a.naxis1)*i_a.crpix1
-      ycen = (1.0d*x_size/i_a.naxis2)*i_a.crpix2
-      tvcircle, pixrad, xcen, ycen, /device
+        if keyword_set(postscript) then $
+            setup_ps, '~/image_'+string(i-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
 
-      stamp_date, i_a, i_b, i_c
+            plot_image, img, true=3, $
+                position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $
+                /normal, $
+                xticklen=-0.001, $
+                yticklen=-0.001, $
+                xtickname=[' ',' ',' ',' ',' ',' '], $
+                ytickname=[' ',' ',' ',' ',' ',' ']
 
-      if ~keyword_set(xwin) then begin
-        img = tvrd(/true)
-	; write_png, 'SDO_3col_plain_'+time2file(i_a.t_obs, /sec)+'.png', img
-	 
-   	image_loc_name = folder + '/image_'+string(i-5, format='(I03)' )+'.png' 
-	   write_png, image_loc_name, img
-      endif else x2png, folder + '/image_'+string(i-5, format='(I03)' )+'.png'
-	      
+            ;------------------------------------------;
+            ; In order to plot a heligraphic grid. Overplot an empty dummy map of the same size then use plot_helio
+            ; aia_prep, fls_211[i], -1, i_0, d_0, /uncomp_delete, /norm
+            read_sdo, fls_211[i], i_0, d_0, outsize=1024
+            index2map, i_0, d_0, map0
+            data = map0.data 
+            data = data < 50.0   ; Juse to make sure the map contours of the dummy map don't sow up.
+            map0.data = data
+            levels = [100,100,100]
+
+
+            set_line_color
+            plot_map, map0, $
+                /cont, $
+                levels=levels, $
+                ; /noxticks, $
+                ; /noyticks, $
+                ; /noaxes, $
+                thick=2.5, $
+                color=0, $
+                position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $ 
+                /normal, $
+                /noerase, $
+                /notitle, $
+                xticklen=-0.02, $
+                yticklen=-0.02, $
+                fov = FOV,$
+                center = CENTER         
+
+            plot_helio, i_0.date_obs, $
+                 /over, $
+                 gstyle=0, $
+                 gthick=2.0, $  
+                 gcolor=255, $
+                 grid_spacing=15.0 
+
+            stamp_date, i_a, i_b, i_c
+
+            oplot_nrh_on_three_color, i_c
+
+        if keyword_set(postscript) then begin
+            device, /close
+            set_plot, 'x'
+        endif    
+        
+        cd, folder  ;change back to aia folder
+
+        if keyword_set(xwin) then x2png, folder + '/image_'+string(i-lwr_lim, format='(I03)' )+'.png'
+  
+        if keyword_set(zbuffer) then begin
+            img = tvrd(/true)
+            ;  ; write_png, 'SDO_3col_plain_'+time2file(i_a.t_obs, /sec)+'.png', img
+
+            ;  image_loc_name = folder + '/image_'+string(i-lwr_lim, format='(I03)' )+'.png' 
+            cd, '~
+            write_png, image_loc_name , img
+        endif
+          
       
-      ; If images too far apart in time then go to here.
-      skip_img:
+        ; If images too far apart in time then go to here.
+        skip_img:
 
-      get_utc, end_loop_t, /cc
-      loop_time = anytim(end_loop_t, /utim) - anytim(start_loop_t, /utim)
-      print,'-------------------'
-      print,'Currently '+string(loop_time, format='(I04)')+' seconds per 3 color image.'
-      print,'-------------------'
+        get_utc, end_loop_t, /cc
+        loop_time = anytim(end_loop_t, /utim) - anytim(start_loop_t, /utim)
+        print,'-------------------'
+        print,'Currently '+string(loop_time, format='(I04)')+' seconds per 3 color image.'
+        print,'-------------------'
 
-   endfor
+        if anytim(i_a.date_obs, /utim) gt time_stop then BREAK
+    endfor
 
-   date = time2file(i_a.t_obs, /date_only)
-   movie_type = '3col_ratio' ;else movie_type = '3col_ratio'
-   cd, folder
-   print, folder
-   spawn, 'ffmpeg -y -r 25 -i image_%03d.png -vb 50M SDO_AIA_'+date+'_'+movie_type+'.mpg'
+    date = time2file(i_a.t_obs, /date_only) 
+    type0 = 'ratio' ;else type0 = 'totB'
+    if keyword_set(hot) then chans = 'hot' else chans = 'cool'
+    movie_type = '3col_'+type0+'_'+chans ;else movie_type = '3col_ratio' cd, folder
+    ;print, folder 
+    ;spawn, 'ffmpeg -y -r 25 -i image_%03d.png -vb 50M AIA_'+date+'_'+movie_type+'.mpg'
 
-
-   spawn, 'cp SDO_AIA_'+date+'_'+movie_type+'.mpg ~/Dropbox/sdo_movies/'
-   ;spawn, 'cp image_000.png ~/Dropbox/sdo_movies/'
-   spawn, 'rm -f image*.png'
+    ;spawn, 'cp AIA_'+date+'_'+movie_type+'.mpg ~/Dropbox/sdo_movies/'
+    ;spawn, 'cp image_000.png ~/Dropbox/sdo_movies/'
+    ;spawn, 'rm -f image*.png'
 
 
 END
