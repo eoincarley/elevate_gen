@@ -66,10 +66,12 @@ pro elevate_html_cme, row_num, tstart, em_start, pinten, template, $
             cme_list = [[cme_list], [cme_times[cactus_ind], cme_vels[cactus_ind], cme_pa[cactus_ind], cme_wid[cactus_ind], pinten]]
         endelse
 
-                ;event_info_to_text, event_folder, date_string, 'cme_time', anytim(cme_times[cactus_ind], /cc)+' UT'
-                ;event_info_to_text, event_folder, date_string, 'cme_speed', string(cme_vels[cactus_ind], format='(f6.1)')+' km/s'
-                ;event_info_to_text, event_folder, date_string, 'cme_pa', string(cme_pa[cactus_ind], format='(I3)')+' deg'
-                ;event_info_to_text, event_folder, date_string, 'cme_width', string(cme_wid[cactus_ind], format='(I3)')+' deg'
+        event_folder = '~/ELEVATE/data/'+anytim(em_start, /cc, /date)
+        date_string  = time2file(em_start, /date)
+        event_info_to_text, event_folder, date_string, 'cme_time', anytim(cme_times[cactus_ind], /cc)+' UT'
+        event_info_to_text, event_folder, date_string, 'cme_speed', string(cme_vels[cactus_ind], format='(f6.1)')+' km/s'
+        event_info_to_text, event_folder, date_string, 'cme_pa', string(cme_pa[cactus_ind], format='(I3)')+' deg'
+        event_info_to_text, event_folder, date_string, 'cme_width', string(cme_wid[cactus_ind], format='(I3)')+' deg'
 
     endif
 

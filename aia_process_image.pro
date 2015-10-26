@@ -35,10 +35,11 @@ pro aia_process_image, img_name, img_pre_name, hdr, hdr_pre, $
          iscaled_img = iscaled_img > (-2.5) < 8 
       endif   
 
-        if keyword_set(ratio) then begin
+      if keyword_set(ratio) then begin
          iscaled_img = img/img_pre
          undefine, img
          undefine, img_pre
+         iscaled_img = rebin(iscaled_img, 2048, 2048)
          iscaled_img = iscaled_img >0.85 <1.1 ;    ;0.85, 1.1 for ratio image
          iscaled_img =smooth(iscaled_img, 5)
       endif   

@@ -1,7 +1,7 @@
 pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, num_rows, flare_class, active_region, location, $
                       assoc_wave_time, p_intensity, output_flare_data, cme_list = cme_list
   
-    template = rd_tfile('~/ELEVATE/website/row_template.html') 
+    template = rd_tfile('~/ELEVATE/website/row_template_v2.html') 
     template = transpose(template)
 
     ; Edit event_num
@@ -34,7 +34,7 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
     ;---------------------------------------------------;
     ;        Find closest flare to em_start             ;
     ;---------------------------------------------------;
-    elevate_html_flares, row_num, em_start, template, $
+    elevate_html_flares, row_num, em_start, tstart, template, $
             output_flare_data
 
    
@@ -49,11 +49,34 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
     ;------------SEPserver Particle links---------------;
     ;---------------------------------------------------;
     if folder eq 'soho-erne' then begin
+        date_str = time2file(em_start, /date)
+        folder_date = anytim(em_start, /cc, /date)
         sep_row = num_rows - (row_num)
         pinten = p_intensity[sep_row]
         irow = where(strtrim(template,1) eq "<!--ERNE-->")  
         ind_date = stregex(template[irow+1], 'ERNE_P_', length=len)   
         template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + string(sep_row, format='(I04)')+'.gif")>ERNE</a><br>'+pinten     
+        
+        if em_start gt anytim('2010-08-14T00:00:00', /utim) then begin
+            local_folder = '~/ELEVATE/website/maths_server_mirror/'+folder_date+'/SOHO/'
+            erne_png_name = file_search( local_folder+'soho_erne*.png')
+
+            if erne_png_name ne '' then begin
+                local_url = (strsplit(erne_png_name, 'maths_server_mirror/', /extract, /regex))[1]
+                irow = where(strtrim(template,1) eq "<!--ERNE_LOCAL-->")  
+                ind_date = stregex(template[irow+1], 'maths_server_mirror/', length=len)   
+                template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + local_url  + '")>ERNE_LOCAL</a><br>'
+            endif
+
+            local_folder = '~/ELEVATE/website/maths_server_mirror/'+folder_date+'/ACE/
+            epam_png_name = file_search( local_folder+'ace_epam*.png')
+            if epam_png_name ne '' then begin
+                local_url = (strsplit(epam_png_name, 'maths_server_mirror/', /extract, /regex))[1]
+                irow = where(strtrim(template,1) eq "<!--EPAM_LOCAL-->")  
+                ind_date = stregex(template[irow+1], 'maths_server_mirror/', length=len)   
+                template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + local_url  + '")>EPAM_LOCAL</a><br>'
+            endif
+        endif    
 
         if anytim(tstart, /utim) lt anytim('2011-01-28T01:56', /utim) then begin
             irow = where(strtrim(template,1) eq "<!--EPHIN-->")  
@@ -63,7 +86,10 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
             irow = where(strtrim(template,1) eq "<!--EPAM-->")  
             ind_date = stregex(template[irow+1], 'EPAM_E_', length=len)   
             template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + string(sep_row, format='(I04)')+'.png")>EPAM</a><br>'
+
         endif
+
+        event_info_to_text, '~/ELEVATE/data/'+anytim(em_start, /cc, /date), date_str, 'proton_max_i', string(pinten, format='(E8.2)') + ' (1/cm2/sr/s/MeV)'
     endif
 
 
@@ -75,16 +101,27 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
                         euv_wave, output_flare_data, assoc_wave_time
 
 
-
     ;---------------------------------------------------;
     ;---------------- Edit CME links -------------------;
     ;---------------------------------------------------;
     elevate_html_cme, row_num, tstart, em_start, pinten, template, $
                     cme_list
 
+    ;---------------------------------------------------;
+    ;---------------- Edit Results -------------------;
+    ;---------------------------------------------------;    
+    if em_start gt anytim('2010-08-14T00:00:00', /utim) then begin         
+        irow = where(strtrim(template,1) eq "<!--Results-->")  
+        local_results_file = time2file(em_start, /date)+'_event_info_structure.txt'
+        local_url = anytim(em_start, /cc, /date) +'/'+ local_results_file
 
-   if euv_wave eq 'yes' then template[0] = '<tr bgcolor="CCFFCC" >'
-   if nrh_obs_window eq 'yes' and euv_wave eq 'yes' then template[0] = '<tr bgcolor="CCFFFF" >'
+        ind_date = stregex(template[irow+1], 'maths_server_mirror/', length=len)   
+        template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + local_url  + '")>Results</a><br>'
+    endif
+
+    if row_num mod 2 eq 0 then template[0] = '<tr bgcolor=#B0B0B0 >' else template[0] = '<tr bgcolor=#D0D0D0 >'
+    ;if euv_wave eq 'yes' then template[0] = '<tr bgcolor=#333366 >'
+    ;if nrh_obs_window eq 'yes' and euv_wave eq 'yes' then template[0] = '<tr bgcolor=#333366 >'
 
 
    openw, 100, '~/ELEVATE/website/'+folder+'/row_'+string(row_num, format='(I03)')+'.html'
@@ -111,7 +148,8 @@ pro elevate_html_row, fname, folder ;, outname
     ; Input is the text file of times from SEPserver catalogues.
     ; EXAMPLE: elevate_html_row, 'soho_onset.txt', 'soho-erne'
 
-    template = rd_tfile('~/ELEVATE/website/row_template.html') 
+    template = rd_tfile('~/ELEVATE/website/row_template_v2.html') 
+    stop
 
     ;readcol, fname, obs_tstart, obs_tend, a, format='A,A,D', delimiter=','
     readcol, fname, obs_tstart, p_intensity, format='A, A, A'
@@ -132,8 +170,7 @@ pro elevate_html_row, fname, folder ;, outname
         write_row, tstart[i], em_start[i], row_num, folder, wave_times, wave_times_html, num_rows, flare_class, active_region, location, $
               assoc_wave_times, p_intensity, output_flare_data, cme_list = cme_list
         php_incl[i] = "<?php include('"+folder+"/row_"+string(row_num, format='(I03)')+ ".html'); ?>"
-
-        stop        
+        
         row_num = row_num + 1
 
     ENDFOR   

@@ -58,9 +58,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             zoom=zoom, parallelise=parallelise, winnum=winnum, $
             hot = hot, postscript=postscript
    
-   !p.charsize = 1.0
-   folder = '~/Data/elevate_db/'+date+'/SDO/AIA'
-   time_stop = anytim('2014-04-18T13:10:00', /utim)
+    !p.charsize = 1.3
+    folder = '~/Data/elevate_db/'+date+'/SDO/AIA'
+    time_stop = anytim('2014-04-18T13:10:00', /utim)  ;For the 2014-April-Event
 
     if keyword_set(hot) then begin
        pass_a = '094'
@@ -80,12 +80,13 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
        file_loc_171 = folder + '/171'
     endelse
 
-   fls_a = file_search( file_loc_211 +'/*.fits' )
-   fls_b = file_search( file_loc_193 +'/*.fits' )
-   fls_c = file_search( file_loc_171 +'/*.fits' )
+    fls_a = file_search( file_loc_211 +'/*.fits' )
+    fls_b = file_search( file_loc_193 +'/*.fits' )
+    fls_c = file_search( file_loc_171 +'/*.fits' )
+  
+    if n_elements(fls_a) lt 5 or n_elements(fls_b) lt 5 or n_elements(fls_c) lt 5 then goto, files_missing
 
-   shrink = 2.   ;shrink image size
-
+    shrink = 2.   ;shrink image size
     if keyword_set(zoom) then begin
     
         read_sdo, fls_a[0], i_a, /nodata, only_tags='cdelt1,cdelt2,naxis1,naxis2', /mixed_comp, /noshell   
@@ -186,9 +187,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
    endelse
 
 
-   ; This loop finds the closest file to min_tim[n] for each of the filters. It constructs an
-   ; array of indices for each of the filters.
-   for n = 0, n_elements(min_tim)-1 do begin
+    ; This loop finds the closest file to min_tim[n] for each of the filters. It constructs an
+    ; array of indices for each of the filters.
+    for n = 0, n_elements(min_tim)-1 do begin
       sec_min = min(abs(min_tim - min_tim[n]),loc_min)
       if n eq 0 then next_min_im = loc_min else next_min_im = [next_min_im, loc_min]
 
@@ -197,13 +198,13 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
 
       sec_mid = min(abs(mid_tim - min_tim[n]),loc_mid)
       if n eq 0 then next_mid_im = loc_mid else next_mid_im = [next_mid_im, loc_mid]
-   endfor
+    endfor
 
-   if f_min eq f_max then begin
+    if f_min eq f_max then begin
          loc_211 = next_max_im
          loc_193 = next_mid_im
          loc_171 = next_min_im
-   endif else begin
+    endif else begin
       case f_max of
          0: loc_211 = next_max_im
          1: loc_193 = next_max_im
@@ -219,33 +220,32 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
          1: loc_193 = next_min_im
          2: loc_171 = next_min_im
       endcase
-   endelse  
+    endelse  
 
-   fls_211 = f_a[loc_211]
-   fls_193 = f_b[loc_193]
-   fls_171 = f_c[loc_171]
+    fls_211 = f_a[loc_211]
+    fls_193 = f_b[loc_193]
+    fls_171 = f_c[loc_171]
 
-   ; Setup plotting parameters  
-   if keyword_set(xwin) then begin
+    ; Setup plotting parameters  
+    if keyword_set(xwin) then begin
       window, winnum, xs = x_size+border, ys = y_size+border, retain=2
       !p.multi = 0
-   endif else begin     
+    endif else begin     
       ;set_plot, 'z'
       ;!p.multi = 0
       ;img = fltarr(3, x_size+border, x_size+border)
       ;device, set_resolution = [x_size+border, x_size+border], set_pixel_depth=24, decomposed=0
 
-   endelse
+    endelse
 
-   ;-------------------------------------------------;
-   ;        *********************************
-   ;            Image Loop starts here
-   ;        *********************************
-   ;-------------------------------------------------;
+    ;-------------------------------------------------;
+    ;        *********************************
+    ;            Image Loop starts here
+    ;        *********************************
+    ;-------------------------------------------------;
 
-   lwr_lim = 161    ;161 for type III image of initial flare. 260 for type IIIs
-
-    for i = lwr_lim, lwr_lim do begin ;n_elements(fls_211) - 1 do begin
+    lwr_lim = 5    ;161 for type III image of initial flare. 260 for type IIIs. For 2014-Apr-18 Event.
+    for i = lwr_lim, n_elements(fls_211)-1 do begin
       
         get_utc, start_loop_t, /cc
 
@@ -294,9 +294,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
 
         ENDIF ELSE BEGIN
             ;Simply runs processing in series, as opposed to parallel
-            aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /total_b
-            aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /total_b
-            aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /total_b
+            aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /ratio
+            aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /ratio
+            aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /ratio
         ENDELSE
      
         ; Check that the images are closely spaced in time
@@ -347,7 +347,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
                 ; /noyticks, $
                 ; /noaxes, $
                 thick=2.5, $
-                color=0, $
+                color=1, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $ 
                 /normal, $
                 /noerase, $
@@ -360,13 +360,13 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             plot_helio, i_0.date_obs, $
                  /over, $
                  gstyle=0, $
-                 gthick=2.0, $  
+                 gthick=1.5, $  
                  gcolor=255, $
                  grid_spacing=15.0 
 
             stamp_date, i_a, i_b, i_c
 
-            oplot_nrh_on_three_color, i_c
+            ;oplot_nrh_on_three_color, i_c  ;For the 2014-April-Event
 
         if keyword_set(postscript) then begin
             device, /close
@@ -380,12 +380,10 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         if keyword_set(zbuffer) then begin
             img = tvrd(/true)
             ;  ; write_png, 'SDO_3col_plain_'+time2file(i_a.t_obs, /sec)+'.png', img
-
             ;  image_loc_name = folder + '/image_'+string(i-lwr_lim, format='(I03)' )+'.png' 
             cd, '~
             write_png, image_loc_name , img
         endif
-          
       
         ; If images too far apart in time then go to here.
         skip_img:
@@ -396,19 +394,20 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         print,'Currently '+string(loop_time, format='(I04)')+' seconds per 3 color image.'
         print,'-------------------'
 
-        if anytim(i_a.date_obs, /utim) gt time_stop then BREAK
+        ;if anytim(i_a.date_obs, /utim) gt time_stop then BREAK  ;For the 2014-April-Event
     endfor
 
     date = time2file(i_a.t_obs, /date_only) 
     type0 = 'ratio' ;else type0 = 'totB'
     if keyword_set(hot) then chans = 'hot' else chans = 'cool'
     movie_type = '3col_'+type0+'_'+chans ;else movie_type = '3col_ratio' cd, folder
-    ;print, folder 
-    ;spawn, 'ffmpeg -y -r 25 -i image_%03d.png -vb 50M AIA_'+date+'_'+movie_type+'.mpg'
+    print, folder 
+    spawn, 'ffmpeg -y -r 25 -i image_%03d.png -vb 50M AIA_'+date+'_'+movie_type+'.mpg'
 
     ;spawn, 'cp AIA_'+date+'_'+movie_type+'.mpg ~/Dropbox/sdo_movies/'
     ;spawn, 'cp image_000.png ~/Dropbox/sdo_movies/'
-    ;spawn, 'rm -f image*.png'
+    spawn, 'rm -f image*.png'
 
+    files_missing: print,'Files missing for : '+date
 
 END

@@ -1,4 +1,4 @@
-pro elevate_html_flares, row_num, em_start, template,  $
+pro elevate_html_flares, row_num, em_start, tstart, template,  $
 			output_flare_data
 
 	; Prodecure used by elevate_html_row to search for closest flare to em_start
@@ -44,9 +44,11 @@ pro elevate_html_flares, row_num, em_start, template,  $
             flare_time_stamp = anytim(gev_flare_time, /cc, /time_only, /trun)+' UT'    
             ;if gev_name eq 'gev_20140901_1805' then stop
 
-                    ;event_info_to_text, event_folder, date_string, 'flare_class', goes_class
-                    ;event_info_to_text, event_folder, date_string, 'flare_start_t', anytim(gev_flare_time, /cc)+' UT'
-                    ;event_info_to_text, event_folder, date_string, 'flare_location', gev_location  
+            event_folder = '~/ELEVATE/data/'+anytim(em_start, /cc, /date)
+            date_string  = time2file(em_start, /date)
+            event_info_to_text, event_folder, date_string, 'flare_class', goes_class
+            event_info_to_text, event_folder, date_string, 'flare_start_t', anytim(gev_flare_time, /cc)+' UT'
+            event_info_to_text, event_folder, date_string, 'flare_location', gev_location  
         endelse   
 
         irow = where( strtrim(template, 1) eq "<!--Flare LMSAL-->" )
