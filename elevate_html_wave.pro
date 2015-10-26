@@ -56,7 +56,7 @@ pro elevate_html_wave, row_num, tstart, em_start, wave_times, wave_times_html, f
         three_col_mov = 'AIA_' +date_str2+'_3col_ratio_cool.mp4'
         irow = where( strtrim(template, 1) eq "<!--EUV Wave Local-->" )
         ind_date = stregex(template[irow+1], 'maths_server_mirror/', length=len)   
-        template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + date_str1 + '/SDO/'+ three_col_mov + '")>LOCAL</a><br>'
+        template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + date_str1 + '/SDO/'+ three_col_mov + '")>Three Colour</a><br>'
     endif
 
 END

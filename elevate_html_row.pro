@@ -32,7 +32,7 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
     
 
     ;---------------------------------------------------;
-    ;        Find closest flare to em_start             ;
+    ;          Find closest flare to em_start           ;
     ;---------------------------------------------------;
     elevate_html_flares, row_num, em_start, tstart, template, $
             output_flare_data
@@ -55,7 +55,7 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
         pinten = p_intensity[sep_row]
         irow = where(strtrim(template,1) eq "<!--ERNE-->")  
         ind_date = stregex(template[irow+1], 'ERNE_P_', length=len)   
-        template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + string(sep_row, format='(I04)')+'.gif")>ERNE</a><br>'+pinten     
+        template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + string(sep_row, format='(I04)')+'.gif")>SEPserver</a><br>';+pinten     
         
         if em_start gt anytim('2010-08-14T00:00:00', /utim) then begin
             local_folder = '~/ELEVATE/website/maths_server_mirror/'+folder_date+'/SOHO/'
@@ -65,7 +65,10 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
                 local_url = (strsplit(erne_png_name, 'maths_server_mirror/', /extract, /regex))[1]
                 irow = where(strtrim(template,1) eq "<!--ERNE_LOCAL-->")  
                 ind_date = stregex(template[irow+1], 'maths_server_mirror/', length=len)   
-                template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + local_url  + '")>ERNE_LOCAL</a><br>'
+                template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + local_url  + '")>ERNE<span>'
+
+                ind_date = stregex(template[irow+2], 'maths_server_mirror/', length=len)   
+                template[irow+2] = strmid(template[irow+2], 0, ind_date+len) + local_url  + '" alt="image" height="400" /></span></a><br>'
             endif
 
             local_folder = '~/ELEVATE/website/maths_server_mirror/'+folder_date+'/ACE/
@@ -73,8 +76,13 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
             if epam_png_name ne '' then begin
                 local_url = (strsplit(epam_png_name, 'maths_server_mirror/', /extract, /regex))[1]
                 irow = where(strtrim(template,1) eq "<!--EPAM_LOCAL-->")  
+
                 ind_date = stregex(template[irow+1], 'maths_server_mirror/', length=len)   
-                template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + local_url  + '")>EPAM_LOCAL</a><br>'
+                template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + local_url  + '")>EPAM<span>'
+
+                ind_date = stregex(template[irow+2], 'maths_server_mirror/', length=len)   
+                template[irow+2] = strmid(template[irow+2], 0, ind_date+len) + local_url  + '" alt="image" height="400" /></span></a><br>'
+
             endif
         endif    
 
@@ -85,7 +93,7 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
 
             irow = where(strtrim(template,1) eq "<!--EPAM-->")  
             ind_date = stregex(template[irow+1], 'EPAM_E_', length=len)   
-            template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + string(sep_row, format='(I04)')+'.png")>EPAM</a><br>'
+            template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + string(sep_row, format='(I04)')+'.png")>SEPserver</a><br>'
 
         endif
 
@@ -116,7 +124,7 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
         local_url = anytim(em_start, /cc, /date) +'/'+ local_results_file
 
         ind_date = stregex(template[irow+1], 'maths_server_mirror/', length=len)   
-        template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + local_url  + '")>Results</a><br>'
+        template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + local_url  + '")>Event Info</a><br>'
     endif
 
     if row_num mod 2 eq 0 then template[0] = '<tr bgcolor=#B0B0B0 >' else template[0] = '<tr bgcolor=#D0D0D0 >'
