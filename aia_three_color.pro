@@ -225,7 +225,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     fls_211 = f_a[loc_211]
     fls_193 = f_b[loc_193]
     fls_171 = f_c[loc_171]
-
+    
     ; Setup plotting parameters  
     if keyword_set(xwin) then begin
       window, winnum, xs = x_size+border, ys = y_size+border, retain=2
@@ -245,6 +245,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     ;-------------------------------------------------;
 
     lwr_lim = 5    ;161 for type III image of initial flare. 260 for type IIIs. For 2014-Apr-18 Event.
+    img_num = lwr_lim
     for i = lwr_lim, n_elements(fls_211)-1 do begin
       
         get_utc, start_loop_t, /cc
@@ -318,7 +319,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         ;---------------------------;
 
         if keyword_set(postscript) then $
-            setup_ps, '~/image_'+string(i-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
+            setup_ps, '~/image_'+string(img_num-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
 
             plot_image, img, true=3, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $
@@ -374,8 +375,8 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         endif    
         
         cd, folder  ;change back to aia folder
-
-        if keyword_set(xwin) then x2png, folder + '/image_'+string(i-lwr_lim, format='(I03)' )+'.png'
+        
+        if keyword_set(xwin) then x2png, folder + '/image_'+string(img_num-lwr_lim, format='(I03)' )+'.png'
   
         if keyword_set(zbuffer) then begin
             img = tvrd(/true)
@@ -384,9 +385,11 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             cd, '~
             write_png, image_loc_name , img
         endif
-      
+        
+        img_num = img_num + 1
+
         ; If images too far apart in time then go to here.
-        skip_img:
+        skip_img: print, 'Images too far spaced in time.'
 
         get_utc, end_loop_t, /cc
         loop_time = anytim(end_loop_t, /utim) - anytim(start_loop_t, /utim)
@@ -406,7 +409,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
 
     ;spawn, 'cp AIA_'+date+'_'+movie_type+'.mpg ~/Dropbox/sdo_movies/'
     ;spawn, 'cp image_000.png ~/Dropbox/sdo_movies/'
-    spawn, 'rm -f image*.png'
+    ;spawn, 'rm -f image*.png'
 
     files_missing: print,'Files missing for : '+date
 
