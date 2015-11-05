@@ -1,19 +1,9 @@
-pro define_ecliptic
+pro mag_define_ecliptic
 
 	nlines = 200
 	str = dblarr(nlines)
 	str[*] = 2.5
 
-<<<<<<< HEAD
-	lat0 = 85.0
-	lat1 = 95.0
-	stth = ( dindgen(nlines)*(lat1 - lat0)/(nlines-1.) ) + lat0
-	stth[*] = 0.0 ;stth*!dtor
-	new_stth = stth
-
-	lon0 = 	-90.0
-	lon1 =   90.0
-=======
 	lat0 = 89.0
 	lat1 = 91.0
 	stth = ( dindgen(nlines)*(lat1 - lat0)/(nlines-1.) ) + lat0
@@ -21,11 +11,15 @@ pro define_ecliptic
 
 	lon0 = -180.0
 	lon1 = 180.0
->>>>>>> 0f827ac53b612148ffcced3336ae285294a930c6
 	stph = ( dindgen(nlines)*(lon1 - lon0)/(nlines-1.) ) + lon0
 	stph = stph*!dtor
 
 	;junk = execute('pfss_trace_field')
+
+	; To get the color of these lines, go to pfss_draw_field3.pro. On line 143 there is a for loop
+	; that sets each field line property. The color of the field line can be gotten here from the
+	; olist object. The olist object is created by pfss_view_create.
+
 
 	coord = [1.0, stth, stph]
 
@@ -34,22 +28,14 @@ pro define_ecliptic
 		CONVERT_STEREO_COORD, '2010-08-10T00:00', coord, 'HEE', 'HEEQ'
 		new_stth[i] = coord[1]
 	endfor
-	stop
+
 	;------------------------------------
 
-	ptr_deg = ptr
-<<<<<<< HEAD
-	ptth_deg = ptth*!radeg*10.0
-	ptph_deg = (ptph + 180.0)*!radeg*10.0
+	rad = ptr
+	lat = 90.0 - ptth*!radeg
+	lon = (ptph)*!radeg + 180.0
 
-	pfss_mag_create, magout, 3, 180.0, 2, file='synop_Ml_0.2100.fits'
-	plot_image, magout > (-100) < 200
-
-	set_line_color
-	for i=0, 199 do plots, ptph[*, i]/10.0 + 180.0, ptth[*, i]/10.0, psym=3, /data, color=3
-=======
-	ptth_deg = ptth*!radeg
-	ptph_deg = (ptph)*!radeg + 180.0
+	save, br, rad, lat, lon, filename = '~/ELEVATE/data/pfss/connected_field_20100810.sav'
 
 	window, 0
 	pfss_mag_create, magout, 4, 1800.0, 2, file='~/ELEVATE/data/pfss/synopMr_2150.fits'
@@ -57,6 +43,5 @@ pro define_ecliptic
 
 	set_line_color
 	for i=0, 199 do plots, ptph_deg[*, i], ptth_deg[*, i]*10.0, psym=3, /data, color=3
->>>>>>> 0f827ac53b612148ffcced3336ae285294a930c6
 
 END
