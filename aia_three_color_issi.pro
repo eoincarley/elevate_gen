@@ -35,8 +35,8 @@ END
 pro stamp_date, i_a, i_b, i_c
    set_line_color
 
-   xpos_aia_lab = 0.15
-   ypos_aia_lab = 0.15
+   xpos_aia_lab = 0.05
+   ypos_aia_lab = 0.05
 
    xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
    xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
@@ -54,11 +54,11 @@ END
 ;
 ;--------------------------------------------------------------------;
 
-pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
+pro aia_three_color_issi, date = date, mssl = mssl, xwin = xwin, $
             zoom=zoom, parallelise=parallelise, winnum=winnum, $
-            hot = hot, postscript=postscript
+            hot = hot, postscript=postscript, zbuffer=zbuffer
    
-    !p.charsize = 1.3
+    !p.charsize = 4.0
     folder = '~/Data/elevate_db/'+date+'/SDO/AIA'
     time_stop = anytim('2014-04-18T13:10:00', /utim)  ;For the 2014-April-Event
 
@@ -86,18 +86,19 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
   
     if n_elements(fls_a) lt 5 or n_elements(fls_b) lt 5 or n_elements(fls_c) lt 5 then goto, files_missing
 
-    shrink = 2.   ;shrink image size
+    shrink = 1.   ;shrink image size
     if keyword_set(zoom) then begin
     
         read_sdo, fls_a[0], i_a, /nodata, only_tags='cdelt1,cdelt2,naxis1,naxis2', /mixed_comp, /noshell   
-        FOV = [16.6, 16.6]
-        CENTER = [500.0, -250.0];[500.0, -350.0]
+        FOV = [16.0, 16.0]
+        CENTER = [1000.0, 0.0]
         x0 = (CENTER[0]/i_a.cdelt1 + (i_a.naxis1/2.0)) - (FOV[0]*60.0/i_a.cdelt1)/2.0
         x1 = (CENTER[0]/i_a.cdelt1 + (i_a.naxis1/2.0)) + (FOV[0]*60.0/i_a.cdelt1)/2.0
         y0 = (CENTER[1]/i_a.cdelt2 + (i_a.naxis2/2.0)) - (FOV[1]*60.0/i_a.cdelt2)/2.0
         y1 = (CENTER[1]/i_a.cdelt2 + (i_a.naxis2/2.0)) + (FOV[1]*60.0/i_a.cdelt2)/2.0
-        x_range = [x0, x1]    
-        y_range = [y0, y1]      
+	
+	x_range = [x0, x1]/2 < 2047    
+        y_range = [y0, y1]/2 < 2047     
 
         if (x_range[1]-x_range[0]) gt 1024 or (y_range[1]-y_range[0]) gt 1024 then begin
             if (x_range[1]-x_range[0]) ge (y_range[1]-y_range[0]) then begin
@@ -116,8 +117,8 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     endif else begin
         x_range = [0, 4095]
         y_range = [0, 4095]
-        x_size = 1024
-        y_size = 1024
+        x_size = 2048
+        y_size = 2048
         border = 200
     endelse
 
@@ -231,11 +232,10 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
       window, winnum, xs = x_size+border, ys = y_size+border, retain=2
       !p.multi = 0
     endif else begin     
-      ;set_plot, 'z'
-      ;!p.multi = 0
-      ;img = fltarr(3, x_size+border, x_size+border)
-      ;device, set_resolution = [x_size+border, x_size+border], set_pixel_depth=24, decomposed=0
-
+      set_plot, 'z'
+      !p.multi = 0
+      img = fltarr(3, x_size+border, x_size+border)
+      device, set_resolution = [x_size+border, x_size+border], set_pixel_depth=24, decomposed=0
     endelse
 
     ;-------------------------------------------------;
@@ -244,7 +244,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     ;        *********************************
     ;-------------------------------------------------;
 
-    lwr_lim = 161    ;161 for type III image of initial flare. 260 for type IIIs. For 2014-Apr-18 Event.
+    lwr_lim = 5    ;161 for type III image of initial flare. 260 for type IIIs. For 2014-Apr-18 Event.
     img_num = lwr_lim
     for i = lwr_lim, n_elements(fls_211)-1 do begin
       
@@ -307,6 +307,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
 
         truecolorim = [[[iscaled_a]], [[iscaled_b]], [[iscaled_c]]] ;contruct RGB image
 
+		
         if keyword_set(zoom) then $
         img = congrid(truecolorim[x_range[0]:x_range[1],y_range[0]:y_range[1], *], x_size, y_size, 3) else $
            img = rebin(truecolorim, x_size, y_size, 3)
@@ -317,9 +318,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         ;---------------------------;
         ;       PLOT IMAGE
         ;---------------------------;
-
+		
         if keyword_set(postscript) then $
-            setup_ps, '~/image_'+string(img_num-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
+            setup_ps, '~/Dropbox/issi/image_'+string(img_num-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
 
             plot_image, img, true=3, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $
@@ -332,10 +333,10 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             ;------------------------------------------;
             ; In order to plot a heligraphic grid. Overplot an empty dummy map of the same size then use plot_helio
             ; aia_prep, fls_211[i], -1, i_0, d_0, /uncomp_delete, /norm
-            read_sdo, fls_211[i], i_0, d_0, outsize=1024
+            read_sdo, fls_211[i], i_0, d_0, outsize=2048
             index2map, i_0, d_0, map0
             data = map0.data 
-            data = data < 50.0   ; Juse to make sure the map contours of the dummy map don't sow up.
+            data = data < 50.0   ; Just to make sure the map contours of the dummy map don't show up.
             map0.data = data
             levels = [100,100,100]
 
@@ -376,18 +377,31 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         
         cd, folder  ;change back to aia folder
         
-        if keyword_set(xwin) then x2png, folder + '/image_'+string(img_num-lwr_lim, format='(I03)' )+'.png'
-  
-        if keyword_set(zbuffer) then begin
+        if keyword_set(xwin) then x2png, folder + '/image_'+string((img_num-lwr_lim)  , format='(I03)' )+'.png'
+        if keyword_set(xwin) then x2png, folder + '/image_'+string((img_num-lwr_lim)+1  , format='(I03)' )+'.png'
+        if keyword_set(xwin) then x2png, folder + '/image_'+string((img_num-lwr_lim)+2  , format='(I03)' )+'.png'
+        if keyword_set(xwin) then x2png, folder + '/image_'+string((img_num-lwr_lim)+3  , format='(I03)' )+'.png'
+        if keyword_set(xwin) then x2png, folder + '/image_'+string((img_num-lwr_lim)+4  , format='(I03)' )+'.png'
+        
+	if keyword_set(zbuffer) then begin
             img = tvrd(/true)
             ;  ; write_png, 'SDO_3col_plain_'+time2file(i_a.t_obs, /sec)+'.png', img
-            ;  image_loc_name = folder + '/image_'+string(i-lwr_lim, format='(I03)' )+'.png' 
-            cd, '~
-            write_png, image_loc_name , img
+            image_loc_name0 = '~/Dropbox/issi/image_'+string((img_num-lwr_lim)  , format='(I03)' )+'.png'
+            image_loc_name1 = '~/Dropbox/issi/image_'+string((img_num-lwr_lim)+1  , format='(I03)' )+'.png'
+            image_loc_name2 = '~/Dropbox/issi/image_'+string((img_num-lwr_lim)+2  , format='(I03)' )+'.png'
+            image_loc_name3 = '~/Dropbox/issi/image_'+string((img_num-lwr_lim)+3  , format='(I03)' )+'.png'
+            image_loc_name4 = '~/Dropbox/issi/image_'+string((img_num-lwr_lim)+4  , format='(I03)' )+'.png'
+            cd, '~'
+            print, 'Writing to ~/Dropbox/issi/image_'+string((img_num-lwr_lim)  , format='(I03)' )+'.png'
+	    write_png, image_loc_name0 , img
+	    write_png, image_loc_name1 , img
+	    write_png, image_loc_name2 , img
+	    ;write_png, image_loc_name3 , img
+	    ;write_png, image_loc_name4 , img
+
         endif
         
-        img_num = img_num + 1
-
+        img_num = img_num + 3
         ; If images too far apart in time then go to here.
         skip_img: print, 'Images too far spaced in time.'
 
@@ -397,7 +411,6 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         print,'Currently '+string(loop_time, format='(I04)')+' seconds per 3 color image.'
         print,'-------------------'
 
-        STOP
         ;if anytim(i_a.date_obs, /utim) gt time_stop then BREAK  ;For the 2014-April-Event
     endfor
 
@@ -405,7 +418,8 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     type0 = 'ratio' ;else type0 = 'totB'
     if keyword_set(hot) then chans = 'hot' else chans = 'cool'
     movie_type = '3col_'+type0+'_'+chans ;else movie_type = '3col_ratio' cd, folder
-    print, folder 
+    ;print, folder 
+    cd,'~/Dropbox/issi/'
     spawn, 'ffmpeg -y -r 25 -i image_%03d.png -vb 50M AIA_'+date+'_'+movie_type+'.mpg'
 
     ;spawn, 'cp AIA_'+date+'_'+movie_type+'.mpg ~/Dropbox/sdo_movies/'
