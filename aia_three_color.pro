@@ -1,9 +1,9 @@
 pro setup_ps, name, xsize, ysize
 
-   set_plot,'ps'
-   !p.font=0
-   !p.charsize=1.0
-   device, filename = name, $
+    set_plot,'ps'
+    !p.font=0
+    !p.charsize=1.8
+    device, filename = name, $
           ;/decomposed, $
           /color, $
           /helvetica, $
@@ -11,7 +11,7 @@ pro setup_ps, name, xsize, ysize
           xsize=xsize/100, $
           ysize=xsize/100, $
           /encapsulate, $
-          bits_per_pixel=16, $
+          bits_per_pixel=32, $
           yoffset=5
 
 end
@@ -33,10 +33,10 @@ pro return_struct, bridge, struct_name, struct
 END
 
 pro stamp_date, i_a, i_b, i_c
+   
    set_line_color
-
-   xpos_aia_lab = 0.15
-   ypos_aia_lab = 0.15
+   xpos_aia_lab = 0.10
+   ypos_aia_lab = 0.8
 
    xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
    xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
@@ -86,16 +86,20 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
   
     if n_elements(fls_a) lt 5 or n_elements(fls_b) lt 5 or n_elements(fls_c) lt 5 then goto, files_missing
 
-    shrink = 2.   ;shrink image size
+    shrink = 1.   ;shrink image size
     if keyword_set(zoom) then begin
     
         read_sdo, fls_a[0], i_a, /nodata, only_tags='cdelt1,cdelt2,naxis1,naxis2', /mixed_comp, /noshell   
+        ;FOV = [5.0, 5.0]
+        ;CENTER = [520.0, -225.0]
         FOV = [16.6, 16.6]
         CENTER = [500.0, -250.0];[500.0, -350.0]
+        
         x0 = (CENTER[0]/i_a.cdelt1 + (i_a.naxis1/2.0)) - (FOV[0]*60.0/i_a.cdelt1)/2.0
         x1 = (CENTER[0]/i_a.cdelt1 + (i_a.naxis1/2.0)) + (FOV[0]*60.0/i_a.cdelt1)/2.0
         y0 = (CENTER[1]/i_a.cdelt2 + (i_a.naxis2/2.0)) - (FOV[1]*60.0/i_a.cdelt2)/2.0
         y1 = (CENTER[1]/i_a.cdelt2 + (i_a.naxis2/2.0)) + (FOV[1]*60.0/i_a.cdelt2)/2.0
+        
         x_range = [x0, x1]    
         y_range = [y0, y1]      
 
@@ -113,6 +117,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
          y_size = (y_range[1]-y_range[0])
         endelse        
         border = 200
+
     endif else begin
         x_range = [0, 4095]
         y_range = [0, 4095]
@@ -125,50 +130,50 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     y_size = y_size/shrink
 
 
-   ; Check the images to make sure we're not using AEC-affected images
-   min_exp_t_193 = 1.0
-   min_exp_t_211 = 1.5
-   min_exp_t_171 = 1.5
+    ; Check the images to make sure we're not using AEC-affected images
+    min_exp_t_193 = 1.0
+    min_exp_t_211 = 1.5
+    min_exp_t_171 = 1.5
 
-   read_sdo, fls_a, i_a, /nodata, only_tags='exptime,date-obs', /mixed_comp, /noshell
-   f_a = fls_a[where(i_a.exptime gt min_exp_t_211)]
-   t = anytim(i_a.date_d$obs)
-   t_a = t[where(i_a.exptime gt min_exp_t_211)]
+    read_sdo, fls_a, i_a, /nodata, only_tags='exptime,date-obs', /mixed_comp, /noshell
+    f_a = fls_a[where(i_a.exptime gt min_exp_t_211)]
+    t = anytim(i_a.date_d$obs)
+    t_a = t[where(i_a.exptime gt min_exp_t_211)]
 
-   read_sdo, fls_b, i_b, /nodata, only_tags='exptime,date-obs', /mixed_comp, /noshell
-   f_b = fls_b[where(i_b.exptime gt min_exp_t_193)]
-   t = anytim(i_b.date_d$obs)
-   t_b = t[where(i_b.exptime gt min_exp_t_193)]
+    read_sdo, fls_b, i_b, /nodata, only_tags='exptime,date-obs', /mixed_comp, /noshell
+    f_b = fls_b[where(i_b.exptime gt min_exp_t_193)]
+    t = anytim(i_b.date_d$obs)
+    t_b = t[where(i_b.exptime gt min_exp_t_193)]
 
-   read_sdo, fls_c, i_c, /nodata, only_tags='exptime,date-obs', /mixed_comp, /noshell
-   f_c = fls_c[where(i_c.exptime gt min_exp_t_171)]
-   t = anytim(i_c.date_d$obs)
-   t_c = t[where(i_c.exptime gt min_exp_t_171)]
+    read_sdo, fls_c, i_c, /nodata, only_tags='exptime,date-obs', /mixed_comp, /noshell
+    f_c = fls_c[where(i_c.exptime gt min_exp_t_171)]
+    t = anytim(i_c.date_d$obs)
+    t_c = t[where(i_c.exptime gt min_exp_t_171)]
 
-   t_str_a = anytim(t_a)
-   t_str_b = anytim(t_b)
-   t_str_c = anytim(t_c)
+    t_str_a = anytim(t_a)
+    t_str_b = anytim(t_b)
+    t_str_c = anytim(t_c)
 
-   ; Now identify images adjacent in time using the smallest array to get
-   ; the image times
-   arrs = [n_elements(f_a), n_elements(f_b), n_elements(f_c)]
-   val = max(arrs, f_max, subscript_min = f_min)
-   n_array = [0,1,2]
+    ; Now identify images adjacent in time using the smallest array to get
+    ; the image times
+    arrs = [n_elements(f_a), n_elements(f_b), n_elements(f_c)]
+    val = max(arrs, f_max, subscript_min = f_min)
+    n_array = [0,1,2]
 
 
-   case f_min of
+    case f_min of
       0: image_time = t_a
       1: image_time = t_b
       2: image_time = t_c
-   endcase
+    endcase
 
-   f_mid = n_array[where(n_array ne f_max and n_array ne f_min)]
+    f_mid = n_array[where(n_array ne f_max and n_array ne f_min)]
 
-   if f_min eq f_max then begin
+    if f_min eq f_max then begin
          max_tim = t_str_a
          mid_tim = t_str_b
          min_tim = t_str_c
-   endif else begin
+    endif else begin
       case f_max of
          0: max_tim = t_str_a
          1: max_tim = t_str_b
@@ -184,7 +189,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
          1: mid_tim = t_str_b
          2: mid_tim = t_str_c
       endcase
-   endelse
+    endelse
 
 
     ; This loop finds the closest file to min_tim[n] for each of the filters. It constructs an
@@ -244,14 +249,16 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     ;        *********************************
     ;-------------------------------------------------;
 
-    lwr_lim = 161    ;161 for type III image of initial flare. 260 for type IIIs. For 2014-Apr-18 Event.
+    lwr_lim = 180   ; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
+                    ; 190 on cool AIA channels for good CME legs.
+                    ; 185 for detached EUV wave
     img_num = lwr_lim
-    for i = lwr_lim, n_elements(fls_211)-1 do begin
+    for i = lwr_lim, 190 do begin ;n_elements(fls_211)-1 do begin
       
         get_utc, start_loop_t, /cc
 
         IF keyword_set(parallelise) THEN BEGIN
-            ;---------- Run processing of three images in parallel using IDL bridges ------------;
+            ;---------- Run processing of three images in parallel using IDL bridges ---------s---;
             pref_set, 'IDL_STARTUP', '/Users/eoincarley/idl/.idlstartup',/commit             
             oBridge1 = OBJ_NEW('IDL_IDLBridge', output='/Users/eoincarley/child1_output.txt') 
             oBridge1->EXECUTE, '@' + PREF_GET('IDL_STARTUP')   ;Necessary to define startup file because child process has no memory of ssw_path of parent process
@@ -295,9 +302,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
 
         ENDIF ELSE BEGIN
             ;Simply runs processing in series, as opposed to parallel
-            aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /ratio
-            aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /ratio
-            aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /ratio
+            aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /nrgf
+            aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /nrgf
+            aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /nrgf
         ENDELSE
      
         ; Check that the images are closely spaced in time
@@ -311,11 +318,11 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         img = congrid(truecolorim[x_range[0]:x_range[1],y_range[0]:y_range[1], *], x_size, y_size, 3) else $
            img = rebin(truecolorim, x_size, y_size, 3)
 
-                ;expand_tv, img, x_size, y_size, border/2, border/2, true = 3;, min = -3.0, max = 3.0;, origin=img_origin, scale=img_scale, /data
-                ;if keyword_set(grid) then plot_helio, i_a1[0].date_d$obs, grid=15, /over, b0=map.b0, rsun=map.rsun, l0=map.l0, gthick=thicky
-        
+            ;expand_tv, img, x_size, y_size, border/2, border/2, true = 3;, min = -3.0, max = 3.0;, origin=img_origin, scale=img_scale, /data
+            ;if keyword_set(grid) then plot_helio, i_a1[0].date_d$obs, grid=15, /over, b0=map.b0, rsun=map.rsun, l0=map.l0, gthick=thicky
+
         ;---------------------------;
-        ;       PLOT IMAGE
+        ;        PLOT IMAGE
         ;---------------------------;
 
         if keyword_set(postscript) then $
@@ -330,8 +337,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
                 ytickname=[' ',' ',' ',' ',' ',' ']
 
             ;------------------------------------------;
-            ; In order to plot a heligraphic grid. Overplot an empty dummy map of the same size then use plot_helio
-            ; aia_prep, fls_211[i], -1, i_0, d_0, /uncomp_delete, /norm
+            ; In order to plot a heligraphic grid. Overplot an empty dummy 
+            ; map of the same size then use plot_helio aia_prep, fls_211[i],
+            ; -1, i_0, d_0, /uncomp_delete, /norm
             read_sdo, fls_211[i], i_0, d_0, outsize=1024
             index2map, i_0, d_0, map0
             data = map0.data 
@@ -348,7 +356,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
                 ; /noyticks, $
                 ; /noaxes, $
                 thick=2.5, $
-                color=1, $
+                color=0, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $ 
                 /normal, $
                 /noerase, $
@@ -367,7 +375,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
 
             stamp_date, i_a, i_b, i_c
 
-            ;oplot_nrh_on_three_color, i_c  ;For the 2014-April-Event
+            oplot_nrh_on_three_color, i_c.date_obs ;For the 2014-April-Event
 
         if keyword_set(postscript) then begin
             device, /close
@@ -385,7 +393,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             cd, '~
             write_png, image_loc_name , img
         endif
-        
+        print, img_num
         img_num = img_num + 1
 
         ; If images too far apart in time then go to here.
@@ -397,7 +405,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         print,'Currently '+string(loop_time, format='(I04)')+' seconds per 3 color image.'
         print,'-------------------'
 
-        STOP
+;STOP      
         ;if anytim(i_a.date_obs, /utim) gt time_stop then BREAK  ;For the 2014-April-Event
     endfor
 
