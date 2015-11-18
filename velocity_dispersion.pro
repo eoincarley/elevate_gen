@@ -16,7 +16,7 @@ pro manual_detection, date, ints, average_window, tonset, $
 	i1_zoom = i_zoom_point + i_zoom_point*2.5
 	yzoom = [i0_zoom, i1_zoom]
 
-	window, 3, xs=400, ys=400
+	window, 1, xs=600, ys=600
 	junk = execute(plot_sep_zoom)
 
 	ints_zoom = ints[ where(date gt t0_zoom and date lt t1_zoom) ]
@@ -214,8 +214,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 ;
 ;
 ; REVISION HISTORY:
-;    2015-Jul-21, Eoin Carley.
-;       
+;    2015-Jul-21, Eoin Carley.       
 ;                                      
 ;-                                       
 
@@ -223,7 +222,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	!p.charsize = 1.5
 	event_folder = '/Users/eoincarley/ELEVATE/data/' +date_folder+ '/'
 	ace_folder = event_folder + 'ACE/'
-	soho_folder = event_folder + 'ERNE/'
+	soho_folder = event_folder + 'SOHO/ERNE/'
 
 	yrange = '[1e-4, 1e4]'		; To be used in case that CUSUM method is chosen and particle counts are used.		 
 
@@ -265,9 +264,16 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 			count_on = 0
 		endelse
 
+		if file_test(soho_folder+'params_for_vda.sav') then begin 
+			restore, soho_folder+'params_for_vda.sav', /verb
+		endif else begin
+			param_struct = {name:'SOHO ERNE PROTONS', start_date:erne_date[0], energy_range:['18.9', '57.4'], smooth_param:30, average_window:420}
+			save, param_struct, filename=soho_folder+'params_for_vda.sav', description = 'Parameters used in the VDA for this event'
+		endelse	
+
 		chan_inds = ((indgen(19)*(22 - 3)/18 ) + 3)*2
-		start_energy = '15.4'
-		end_energy = '57.4'
+		start_energy = (param_struct.energy_range)[0] ;'15.4'
+		end_energy = (param_struct.energy_range)[1] ;'57.4'
 		particle_data = erne_data
 		particle_date = erne_date
 		chan_start = (chan_inds[where(erne_energies eq start_energy)])[0] + count_on
@@ -277,12 +283,12 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		chan_energies = erne_energies
 		instrument = 'SOHO ERNE PROTONS'
 		particle_type = 'proton'
-		smooth_param = 30
-		average_window = 420.0
+		smooth_param = param_struct.smooth_param ; 30
+		average_window = param_struct.average_window ; 420.0
 		detection_time_err = 10.0 	; minutes
 
-		param_struct = {name:instrument, start_date:particle_date[0], energy_range:[start_energy, end_energy], smooth_param:smooth_param, average_window:average_window}
-		save, param_struct, filename=soho_folder+'params_for_vda.sav', description = 'Paramaeters used in the VDA for this event'
+		;param_struct = {name:instrument, start_date:particle_date[0], energy_range:[start_energy, end_energy], smooth_param:smooth_param, average_window:average_window}
+		;save, param_struct, filename=soho_folder+'params_for_vda.sav', description = 'Paramaeters used in the VDA for this event'
 
 	endif
 
@@ -305,6 +311,13 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 
 	if keyword_set(epam_e) then begin	
 		
+		if file_test(ace_folder+'params_for_vda.sav') then begin
+			restore, ace_folder+'params_for_vda.sav', /verb
+		endif else begin
+			param_struct = {name:'ACE EPAM ELECTRONS', date:epam_data[0, 0], smooth_param:1, average_window:180}
+			save, param_struct, filename=ace_folder+'params_for_vda.sav', description = 'Parameters used in the VDA of for this event'
+		endelse	
+
 		yrange = '[1e0, 1e7]'
 		particle_data = epam_electrons
 		particle_date = epam_data[0, *]
@@ -315,12 +328,12 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		chan_energies = ace_ps[p_index]
 		instrument = 'ACE EPAM ELECTRONS'
 		particle_type = 'electron'
-		smooth_param = 5
-		average_window = 120.0
+		smooth_param = param_struct.smooth_param ;5
+		average_window = param_struct.average_window ;120.0
 		detection_time_err = 5.0 	; minutes
 
-		param_struct = {name:instrument, date:particle_date[0], smooth_param:smooth_param, average_window:average_window}
-		save, param_struct, filename=ace_folder+'params_for_vda.sav', description = 'Paramaeters used in the VDA of for this event'
+		;param_struct = {name:instrument, date:particle_date[0], smooth_param:smooth_param, average_window:average_window}
+		;save, param_struct, filename=ace_folder+'params_for_vda.sav', description = 'Paramaeters used in the VDA of for this event'
 
 	endif	
 
@@ -348,7 +361,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 
 
 	for channel=chan_start, chan_end, chan_step do begin		; Loop through energy channels
-		window, 0, xs=900, ys=500
+		window, 0, xs=1200, ys=700
 		good = where(particle_data[channel, *] gt 0.0)
 		if good[0] ne -1 then begin
 			ints = smooth(particle_data[channel, good], smooth_param)		; Smoothness is an important parameter
@@ -454,6 +467,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 					perror = perror, $
 					bestnorm = bestnorm, $
 					dof=dof)
+
 	oplot, 1.0/[c_fraction], yfit
 
 	t_release = p[1]*(24.0*60.*60.0) + day_start
@@ -463,7 +477,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	travel_dist = p[0]/day_frac_lt
 	dist_string = +string(travel_dist, format = '(f4.2)')
 
-	t0_error = perror[1]*(24.0*60.) ;Release time error in minutes
+	t0_error = perror[1]*(24.0*60.) ; Release time error in minutes
 	s_error = perror[0]/day_frac_lt
 	
 	box_message, str2arr('Estimated ' +particle_type+ ' release time from:,'$
@@ -487,7 +501,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	if keyword_set(write_info) then event_info_to_text, event_folder, date_string, particle_tag, t_release+' UT'
 
 	particle_tag = particle_type + '_vda_s'
-	if keyword_set(write_info) then event_info_to_text, event_folder, date_string, particle_tag, dist_string
+	if keyword_set(write_info) then event_info_to_text, event_folder, date_string, particle_tag, dist_string+' AU'
 
 
 STOP

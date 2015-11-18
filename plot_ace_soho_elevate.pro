@@ -105,19 +105,17 @@ pro plot_ace_soho_elevate, date_folder
 		restore, ace_file, /verb
 		epam_data = date_ep
 
-
 		index = where(epam_data[0, *] gt erne_date[0] and epam_data[0, *] lt erne_date[n_elements(erne_date)-1])
 		
 		epam_data = epam_data[*, index]
 		epam_protons = epam_data[[1,2,3,4,5,6,7,8,13,14,15], *]
 		
-
 		epam_electrons = epam_data[9:12, *]
 
 		p_max = max(epam_protons)
 		p_min = min(epam_protons)
 		
-		; PROTONS
+		; 		PROTONS
 
 		utplot, epam_data[0, *], epam_protons[0, *], $
 				/xs, $

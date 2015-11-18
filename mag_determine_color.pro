@@ -1,11 +1,9 @@
-pro mag_determine_color, rix, theta, nstep, ptr, ptth, ptph, lat, lon, br, $
-		open=open
+pro mag_determine_color, rix, theta, nstep, ptr, ptth, ptph, lat, lon, br, open=open
 
 
 	; This is code taken from the PFSS package. See pfss_view_create.pro
-	; It determine which field lines are open or closed from the pfss_viewer 
+	; It determines which field lines are open or closed from the pfss_viewer 
 	; common data block variables.
-
 
 	rmax=max(rix,min=rmin)
 	thmin=min(theta,max=thmax)
@@ -33,6 +31,6 @@ pro mag_determine_color, rix, theta, nstep, ptr, ptth, ptph, lat, lon, br, $
 	  endif  
 	endfor  
 
-
+	save, open, filename='~/ELEVATE/data/2011-03-07/SDO/HMI/open_colour_20110307.sav'
 
 END

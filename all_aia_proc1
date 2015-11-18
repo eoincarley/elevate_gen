@@ -4,6 +4,6 @@ print, "It works!"
 .c aia_three_color
 .c aia_three_color_allimgs
 
-aia_three_color_allimgs, 0, 7, 0
+aia_three_color_allimgs, 0, 12, 0
 
 exit
