@@ -19,12 +19,14 @@ pro aia_process_image, img_name, img_pre_name, hdr, hdr_pre, $
          iscaled_img = img/img_pre
          undefine, img
          undefine, img_pre
-         read_sdo, img_name, hdr, junk, outsize=2048
-         iscaled_img = rebin(iscaled_img, 2048, 2048)
+         read_sdo, img_name, hdr, junk, outsize=4096
+         iscaled_img = rebin(iscaled_img, 4096, 4096)
          remove_nans, iscaled_img, iscaled_img, /return_img
          iscaled_img = disk_nrgf_3col_ratio(iscaled_img, hdr, 0, 0, rsub = rsub, rgt=rgt)
-         iscaled_img[rsub] = iscaled_img[rsub]*5.0 > (-3.0) < 5.0   
-         iscaled_img[rgt] = iscaled_img[rgt] > (-5.0) < 4.0 
+         iscaled_img[rsub] = iscaled_img[rsub]*5.0 > (-4.0) < 4.0   
+         iscaled_img[rgt] = iscaled_img[rgt] > (-4.0) < 4.0 
+
+         iscaled_img = smooth(iscaled_img, 5)
       endif 
 
       if keyword_set(total_b) then begin
@@ -32,16 +34,17 @@ pro aia_process_image, img_name, img_pre_name, hdr, hdr_pre, $
          undefine, img
          undefine, img_pre
          iscaled_img = ( iscaled_img - mean(iscaled_img) ) /stdev(iscaled_img)   
-         iscaled_img = iscaled_img > (-2.5) < 8 
+         iscaled_img = iscaled_img > (-4.5) < 10 
       endif   
 
       if keyword_set(ratio) then begin
          iscaled_img = img/img_pre
          undefine, img
          undefine, img_pre
-         iscaled_img = rebin(iscaled_img, 2048, 2048)
-         iscaled_img = iscaled_img >0.85 <1.1 ;    ;0.85, 1.1 for ratio image
+         ;iscaled_img = rebin(iscaled_img, 2048, 2048)
+         iscaled_img = iscaled_img >0.80 <1.1 ;    ;0.85, 1.1 for ratio image
          iscaled_img =smooth(iscaled_img, 5)
+
       endif   
 
  

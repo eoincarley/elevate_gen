@@ -42,13 +42,13 @@ pro stamp_date_nrh, nrh0, nrh1, nrh2
    xyouts, 0.52, 0.02, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
 END
 
-pro plot_nrh_tri_color, aia_time, freqs, x_size, y_size, $
+pro plot_nrh_tri_color, time, freqs, x_size, y_size, $
          hdr_freqs = hdr_freqs
 
    ;x_size = 8.*128
    ;y_size = 8.*128
 
-   t0 = anytim(aia_time, /utim)
+   t0 = anytim(time, /utim)
 
    t0str = anytim(t0, /yoh, /trun, /time_only)
 
