@@ -1,18 +1,18 @@
-pro setup_ps, name, xsize, ysize
+pro setup_postscript, name, xsize, ysize
 
     set_plot,'ps'
     !p.font=0
-    !p.charsize=1.8
+    !p.charsize=0.8
     device, filename = name, $
           ;/decomposed, $
           /color, $
           /helvetica, $
           /inches, $
-          xsize=xsize/100, $
-          ysize=xsize/100, $
+          xsize=14, $;xsize/100, $
+          ysize=7, $;xsize/100, $
           /encapsulate, $
-          bits_per_pixel=32, $
-          yoffset=5
+          bits_per_pixel=32;, $
+         ; yoffset=5
 
 end
 
@@ -35,17 +35,17 @@ END
 pro stamp_date, i_a, i_b, i_c
    
    set_line_color
-   xpos_aia_lab = 0.10
-   ypos_aia_lab = 0.8
+   xpos_aia_lab = 0.075
+   ypos_aia_lab = 0.78
 
    xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
    xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
    
    xyouts, xpos_aia_lab, ypos_aia_lab+0.025, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
-   xyouts, xpos_aia_lab, ypos_aia_lab+0.025, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
+   xyouts, xpos_aia_lab, ypos_aia_lab+0.025, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
    
    xyouts, xpos_aia_lab, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
-   xyouts, xpos_aia_lab, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
+   xyouts, xpos_aia_lab, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
 END
 
 ;--------------------------------------------------------------------;
@@ -58,7 +58,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             zoom=zoom, parallelise=parallelise, winnum=winnum, $
             hot = hot, postscript=postscript
    
-    !p.charsize = 1.3
+    !p.charsize = 1.0
     folder = '~/Data/elevate_db/'+date+'/SDO/AIA'
     time_stop = anytim('2014-04-18T13:10:00', /utim)  ;For the 2014-April-Event
 
@@ -86,14 +86,14 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
   
     if n_elements(fls_a) lt 5 or n_elements(fls_b) lt 5 or n_elements(fls_c) lt 5 then goto, files_missing
 
-    shrink = 1.   ;shrink image size
+    shrink = 2.   ;shrink image size
     if keyword_set(zoom) then begin
     
         read_sdo, fls_a[0], i_a, /nodata, only_tags='cdelt1,cdelt2,naxis1,naxis2', /mixed_comp, /noshell   
         ;FOV = [5.0, 5.0]
         ;CENTER = [520.0, -225.0]
-        FOV = [16.6, 16.6]
-        CENTER = [500.0, -250.0];[500.0, -350.0]
+        FOV = [22, 22]
+        CENTER = [500.0, -400.0] ;[500.0, -350.0];
         
         x0 = (CENTER[0]/i_a.cdelt1 + (i_a.naxis1/2.0)) - (FOV[0]*60.0/i_a.cdelt1)/2.0
         x1 = (CENTER[0]/i_a.cdelt1 + (i_a.naxis1/2.0)) + (FOV[0]*60.0/i_a.cdelt1)/2.0
@@ -153,6 +153,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     t_str_a = anytim(t_a)
     t_str_b = anytim(t_b)
     t_str_c = anytim(t_c)
+
 
     ; Now identify images adjacent in time using the smallest array to get
     ; the image times
@@ -233,14 +234,14 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     
     ; Setup plotting parameters  
     if keyword_set(xwin) then begin
-      window, winnum, xs = x_size+border, ys = y_size+border, retain=2
-      !p.multi = 0
+        loadct, 0, /silent  
+        window, winnum, xs = 2.0*(x_size+border), ys = y_size+border, retain=2
+        !p.multi = 0
     endif else begin     
-      ;set_plot, 'z'
-      ;!p.multi = 0
-      ;img = fltarr(3, x_size+border, x_size+border)
-      ;device, set_resolution = [x_size+border, x_size+border], set_pixel_depth=24, decomposed=0
-
+        ;set_plot, 'z'
+        ;!p.multi = 0
+        ;img = fltarr(3, x_size+border, x_size+border)
+        ;device, set_resolution = [x_size+border, x_size+border], set_pixel_depth=24, decomposed=0
     endelse
 
     ;-------------------------------------------------;
@@ -249,16 +250,19 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     ;        *********************************
     ;-------------------------------------------------;
 
-    lwr_lim = 180   ; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
+    first_img_index = closest(min_tim, anytim('2014-04-18T12:25:00'))
+    last_img_index = closest(min_tim, anytim('2014-04-18T13:20:00'))
+
+    lwr_lim = first_img_index     ; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
                     ; 190 on cool AIA channels for good CME legs.
                     ; 185 for detached EUV wave
     img_num = lwr_lim
-    for i = lwr_lim, 190 do begin ;n_elements(fls_211)-1 do begin
+    for i = lwr_lim, last_img_index do begin    ;n_elements(fls_211)-1 do begin
       
         get_utc, start_loop_t, /cc
 
         IF keyword_set(parallelise) THEN BEGIN
-            ;---------- Run processing of three images in parallel using IDL bridges ---------s---;
+            ;---------- Run processing of three images in parallel using IDL bridges -------------;
             pref_set, 'IDL_STARTUP', '/Users/eoincarley/idl/.idlstartup',/commit             
             oBridge1 = OBJ_NEW('IDL_IDLBridge', output='/Users/eoincarley/child1_output.txt') 
             oBridge1->EXECUTE, '@' + PREF_GET('IDL_STARTUP')   ;Necessary to define startup file because child process has no memory of ssw_path of parent process
@@ -302,9 +306,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
 
         ENDIF ELSE BEGIN
             ;Simply runs processing in series, as opposed to parallel
-            aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /nrgf
-            aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /nrgf
-            aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /nrgf
+            aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /ratio
+            aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /ratio
+            aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /ratio
         ENDELSE
      
         ; Check that the images are closely spaced in time
@@ -324,26 +328,27 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         ;---------------------------;
         ;        PLOT IMAGE
         ;---------------------------;
+        loadct, 0, /silent
 
         if keyword_set(postscript) then $
-            setup_ps, '~/image_'+string(img_num-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
+            setup_postscript, '~/Data/2014_apr_18/AIA_dynspec_movie/image_'+string(img_num-lwr_lim, format='(I03)' )+'.eps', 2.0*(x_size+border), (y_size+border)/4.0
 
             plot_image, img, true=3, $
-                position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $
+                position = [border/4, border/2, x_size/2+border/4, y_size+border/2]/(x_size+border), $
                 /normal, $
                 xticklen=-0.001, $
                 yticklen=-0.001, $
                 xtickname=[' ',' ',' ',' ',' ',' '], $
                 ytickname=[' ',' ',' ',' ',' ',' ']
 
-            ;------------------------------------------;
+            ;---------------------------------------------------------------;
             ; In order to plot a heligraphic grid. Overplot an empty dummy 
             ; map of the same size then use plot_helio aia_prep, fls_211[i],
             ; -1, i_0, d_0, /uncomp_delete, /norm
             read_sdo, fls_211[i], i_0, d_0, outsize=1024
             index2map, i_0, d_0, map0
             data = map0.data 
-            data = data < 50.0   ; Juse to make sure the map contours of the dummy map don't sow up.
+            data = data < 50.0   ; Just to make sure the map contours of the dummy map don't sow up.
             map0.data = data
             levels = [100,100,100]
 
@@ -357,7 +362,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
                 ; /noaxes, $
                 thick=2.5, $
                 color=0, $
-                position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $ 
+                position = [border/4, border/2, x_size/2+border/4, y_size+border/2]/(x_size+border), $ 
                 /normal, $
                 /noerase, $
                 /notitle, $
@@ -369,26 +374,31 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             plot_helio, i_0.date_obs, $
                  /over, $
                  gstyle=0, $
-                 gthick=1.5, $  
+                 gthick=2.5, $  
                  gcolor=255, $
                  grid_spacing=15.0 
 
             stamp_date, i_a, i_b, i_c
 
-            oplot_nrh_on_three_color, i_c.date_obs ;For the 2014-April-Event
+            oplot_nrh_on_three_color, i_c.date_obs      ;For the 2014-April-Event
+
+            dam_orfees_plot_gen, time_marker=anytim(i_c.date_obs, /utim)
+                ;restore,'~/Data/2014_apr_18/sdo/points_faintloop.sav' 
+                ;plots, x, y, /data, psym=1, color=4, thick=4
+                ;plots, x, y, /data, psym=1, color=0, thick=0.3, symsize=0.5
 
         if keyword_set(postscript) then begin
             device, /close
             set_plot, 'x'
         endif    
-        
+    
         cd, folder  ;change back to aia folder
         
         if keyword_set(xwin) then x2png, folder + '/image_'+string(img_num-lwr_lim, format='(I03)' )+'.png'
   
         if keyword_set(zbuffer) then begin
             img = tvrd(/true)
-            ;  ; write_png, 'SDO_3col_plain_'+time2file(i_a.t_obs, /sec)+'.png', img
+            ;  write_png, 'SDO_3col_plain_'+time2file(i_a.t_obs, /sec)+'.png', img
             ;  image_loc_name = folder + '/image_'+string(i-lwr_lim, format='(I03)' )+'.png' 
             cd, '~
             write_png, image_loc_name , img
@@ -405,7 +415,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         print,'Currently '+string(loop_time, format='(I04)')+' seconds per 3 color image.'
         print,'-------------------'
 
-;STOP      
+      
         ;if anytim(i_a.date_obs, /utim) gt time_stop then BREAK  ;For the 2014-April-Event
     endfor
 

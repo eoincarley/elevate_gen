@@ -19,26 +19,26 @@ pro stamp_date_nrh, nrh0, nrh1, nrh2
    set_line_color
    !p.charsize = 1.5
 
-   xyouts, 0.12, 0.86, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
-   xyouts, 0.12, 0.86, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
+   xyouts, 0.12, 0.87, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
+   xyouts, 0.12, 0.87, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
    
-   xyouts, 0.12, 0.835, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
-   xyouts, 0.12, 0.835, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
+   xyouts, 0.12, 0.845, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
+   xyouts, 0.12, 0.845, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
    
-   xyouts, 0.12, 0.81, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
-   xyouts, 0.12, 0.81, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
+   xyouts, 0.12, 0.82, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
+   xyouts, 0.12, 0.82, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
 END
 
 pro plot_nrh_tri_color, time, freqs, x_size, y_size, $
          hdr_freqs = hdr_freqs
 
     start_index=0          ;22,114,206, '2010-04-18T12:56:00'
-    for i=start_index, start_index+240 do begin     
+    for i=0, 10 do begin     
 
         window, 0, xs=700, ys=700
         border = 200.0
         t0 = anytim(time, /utim) + i
-        t0str = anytim(t0, /yoh, /trun, /time_only)
+        t0str = anytim(t0, /yoh, /trun, /time_only) 
 
         cd, '~/Data/2014_apr_18/radio/nrh/'
         filenames = findfile('*.fts')
@@ -93,7 +93,7 @@ pro plot_nrh_tri_color, time, freqs, x_size, y_size, $
         xposition = x_size+40
 
 
-        ;setup_ps, '~/Data/2014_apr_18/radio/images_3col/nrh_3col_image1.eps', x_size+border, y_size+border ;'+string(i - start_index, format='(I03)' )+'.eps', x_size+border, y_size+border
+        setup_ps, '~/image_'+string(i - start_index, format='(I03)' )+'.eps', x_size+border, y_size+border
 
             plot_image, im_zoom, true=3, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $
@@ -131,9 +131,9 @@ pro plot_nrh_tri_color, time, freqs, x_size, y_size, $
 
             plot_helio, nrh_hdr0.date_obs, $
                 /over, $
-                gstyle=0, $
-                gthick=1.5, $  
-                gcolor=255, $
+                gstyle=1, $
+                gthick=1, $  
+                gcolor=255s, $
                 grid_spacing=15.0 
 
            
@@ -144,8 +144,8 @@ pro plot_nrh_tri_color, time, freqs, x_size, y_size, $
             date = time2file(t0, /date_only)
             freq_string = string(nrh_hdr0.freq, format='(I03)') + '_'+ string(nrh_hdr1.freq, format='(I03)') + '_' +string(nrh_hdr2.freq, format='(I03)')
 
-        ;device, /close
-        ;set_plot, 'x'
+        device, /close
+        set_plot, 'x'
 STOP
         print, i
         print, '-------------------'
