@@ -24,7 +24,7 @@ function disk_nrgf_3col_ratio, imgs, hdrs, bgm, bgstd, rsub = rsub, rgt = rgt
 			rsub = where(ht0 le hdrs[i].rsun_obs/hdrs[i].cdelt1)
 			rgt = where(ht0 ge hdrs[i].rsun_obs/hdrs[i].cdelt1)
 			
-			res = nrgf(imgs[*,*,i], htr=[hdrs[i].rsun_obs/hdrs[i].cdelt1, hdrs[i].naxis1/1.9d], crpix1=hdrs[i].crpix1, crpix2=hdrs[i].crpix2, /nopoly)
+			res = nrgf(imgs[*,*,i], htr=[hdrs[i].rsun_obs/hdrs[i].cdelt1, hdrs[i].naxis1/1.0d], crpix1=hdrs[i].crpix1, crpix2=hdrs[i].crpix2, /nopoly)
 			res[where(finite(res, /nan))] = 0.0d
 			
 			tmp = (imgs[*,*,i]-mean(imgs[*,*,i]))/stdev(imgs[*,*,i])
@@ -32,7 +32,7 @@ function disk_nrgf_3col_ratio, imgs, hdrs, bgm, bgstd, rsub = rsub, rgt = rgt
 			rsub = where(ht0 le hdrs[i].rsun/hdrs[i].cdelt1)
 			rgt = where(ht0 ge hdrs[i].rsun_obs/hdrs[i].cdelt1)
 			
-			res = nrgf(imgs[*,*,i], htr=[hdrs[i].rsun/hdrs[i].cdelt1, hdrs[i].naxis1/1.9d], crpix1=hdrs[i].crpix1, crpix2=hdrs[i].crpix2, /nopoly)
+			res = nrgf(imgs[*,*,i], htr=[hdrs[i].rsun/hdrs[i].cdelt1, hdrs[i].naxis1/1.0d], crpix1=hdrs[i].crpix1, crpix2=hdrs[i].crpix2, /nopoly)
 			res[where(finite(res, /nan))] = 0.0d
 			
 			tmp = (imgs[*,*,i]-mean(imgs[*,*,i]))/stdev(imgs[*,*,i])

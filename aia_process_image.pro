@@ -26,7 +26,7 @@ pro aia_process_image, img_name, img_pre_name, hdr, hdr_pre, $
          iscaled_img[rsub] = iscaled_img[rsub]*5.0 > (-4.0) < 4.0   
          iscaled_img[rgt] = iscaled_img[rgt] > (-4.0) < 4.0 
 
-         iscaled_img = smooth(iscaled_img, 5)
+         iscaled_img = filter_image(iscaled_img, /median)
       endif 
 
       if keyword_set(total_b) then begin
@@ -41,18 +41,8 @@ pro aia_process_image, img_name, img_pre_name, hdr, hdr_pre, $
          iscaled_img = img/img_pre
          undefine, img
          undefine, img_pre
-         ;iscaled_img = rebin(iscaled_img, 2048, 2048)
          iscaled_img = iscaled_img >0.80 <1.1 ;    ;0.85, 1.1 for ratio image
-        ; iscaled_img =smooth(iscaled_img, 5)
-
-        ; kernelSize = [5, 5]
-        ; kernel = REPLICATE(-1., kernelSize[0], kernelSize[1])
-        ; kernel[1, 1] = 8
-          
-         ; Apply the filter to the image.
-        ; iscaled_img = CONVOL(FLOAT(iscaled_img), kernel, $
-         ;  /CENTER, /EDGE_TRUNCATE)
-
+         ;iscaled_img = smooth(iscaled_img, 20)
       endif   
 
  
