@@ -19,26 +19,26 @@ pro stamp_date_nrh, nrh0, nrh1, nrh2
    set_line_color
    !p.charsize = 1.5
 
-   xyouts, 0.12, 0.86, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
-   xyouts, 0.12, 0.86, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
+   xyouts, 0.12, 0.87, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
+   xyouts, 0.12, 0.87, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
    
-   xyouts, 0.12, 0.835, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
-   xyouts, 0.12, 0.835, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
+   xyouts, 0.12, 0.845, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
+   xyouts, 0.12, 0.845, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
    
-   xyouts, 0.12, 0.81, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
-   xyouts, 0.12, 0.81, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
+   xyouts, 0.12, 0.82, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=1
+   xyouts, 0.12, 0.82, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
 END
 
 pro plot_nrh_tri_color, time, freqs, x_size, y_size, $
          hdr_freqs = hdr_freqs
 
     start_index=0          ;22,114,206, '2010-04-18T12:56:00'
-    for i=start_index, start_index+240 do begin     
+    for i=0, 10 do begin     
 
         window, 0, xs=700, ys=700
         border = 200.0
         t0 = anytim(time, /utim) + i
-        t0str = anytim(t0, /yoh, /trun, /time_only)
+        t0str = anytim(t0, /yoh, /trun, /time_only) 
 
         cd, '~/Data/2014_apr_18/radio/nrh/clean_wresid/'
         filenames = findfile('*.fts')

@@ -1,6 +1,5 @@
 pro mag_define_ecliptic, date
-	
-	use_network
+
 	carrington_rot_num = TIM2CARR(anytim(date, /cc), /dc)
 	crn_string = string(carrington_rot_num, format='(I4)')
 
@@ -65,7 +64,7 @@ pro mag_define_ecliptic, date
 		save, br, rad, lat, lon, filename = '~/ELEVATE/data/'+date+'/SDO/HMI/connected_field_'+date_str2+'.sav'
 
 
-		mag_synoptic_map_plot, date, /post
+		mag_synoptic_map_plot, date
 	endif
 	
 END

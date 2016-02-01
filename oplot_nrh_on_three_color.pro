@@ -5,9 +5,11 @@ pro oplot_nrh_on_three_color, tstart
 	  
 	folder = '~/Data/2014_Apr_18/radio/nrh/'
 	cd, folder
-	nrh_filenames = findfile('*.fts')
+	nrh_filenames = reverse(findfile('*.fts'))
 
-	for j=8,0,-1 do begin
+	colors = reverse([2,3,4,5,6,7,8,9,10])
+	;colors = [6, 7, 10]
+	for j=0, 8 do begin
 		;tstart =  anytim('2014-04-18T13:09:35', /utim); anytim(aia_hdr.date_obs, /utim) ;anytim('2014-04-18T12:35:11', /utim)
 		t0 = anytim(tstart, /yoh, /trun, /time_only)
 		nrh_file_index = j
@@ -24,8 +26,8 @@ pro oplot_nrh_on_three_color, tstart
 				 nrh_map  
 
 		nrh_data = smooth(nrh_data, 5)
-				nrh_data = alog10(nrh_data)
-				nrh_map.data = nrh_data	
+		nrh_data = alog10(nrh_data)
+		nrh_map.data = nrh_data	
 
 		max_val = max( (nrh_data) ,/nan) 							   
 		nlevels=5.0   
@@ -46,7 +48,7 @@ pro oplot_nrh_on_three_color, tstart
 			/noxticks, $
 			/noyticks, $
 			/noaxes, $
-			thick=5.0, $
+			thick=4.0, $
 			color=1	
 
 
@@ -57,16 +59,16 @@ pro oplot_nrh_on_three_color, tstart
 			/noxticks, $
 			/noyticks, $
 			/noaxes, $
-			thick=2.0, $
-			color=j+2					 	
+			thick=3.0, $
+			color=colors[j]					 	
 		
 		freq_tag = string(nrh_hdr.freq, format='(I03)')
 
 		print, 'Frequency: '+freq_tag+' MHz '+'. Color: '+string(j+2)
 		print, '--------'
 
-		xpos_nrh_lab = 0.10
-		ypos_nrh_lab = 0.88
+		xpos_nrh_lab = 0.075
+		ypos_nrh_lab = 0.75
 
 		;xyouts, xpos_nrh_lab, 0.45 - (j)/40.0, 'NRH '+freq_tag+' MHz', $;+' MHz (1e'+string(max_val, format='(f3.1)')+' K)', $
 		;		color=0, $
