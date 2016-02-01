@@ -1,47 +1,71 @@
-pro mag_define_ecliptic
+pro mag_define_ecliptic, date
+	
+	use_network
+	carrington_rot_num = TIM2CARR(anytim(date, /cc), /dc)
+	crn_string = string(carrington_rot_num, format='(I4)')
 
-	nlines = 200
-	str = dblarr(nlines)
-	str[*] = 2.5
+	response = ''
+	READ, response, PROMPT='Is HMI synoptic map for Carrington rotation '+crn_string+' downloaded? (y/n)'
 
-	lat0 = 89.0
-	lat1 = 91.0
-	stth = ( dindgen(nlines)*(lat1 - lat0)/(nlines-1.) ) + lat0
-	stth = stth*!dtor
+	if response eq 'n' then begin
+		print, 'Making directory ~/ELEVATE/data/'+date+'/SDO/HMI/'
+		spawn, 'mkdir -p ~/ELEVATE/data/'+date+'/SDO/HMI/
+		print, 'Go to the following URL to download the data: '
+		print, 'http://jsoc.stanford.edu/ajax/exportdata.html?ds%3Dhmi.Synoptic_Mr_720s%5B'+crn_string+'%5D%26limit%3Dnone'
+	endif 
 
-	lon0 = -180.0
-	lon1 = 180.0
-	stph = ( dindgen(nlines)*(lon1 - lon0)/(nlines-1.) ) + lon0
-	stph = stph*!dtor
+	if response eq 'y' then begin
 
-	;junk = execute('pfss_trace_field')
+		@pfss_data_block
 
-	; To get the color of these lines, go to pfss_draw_field3.pro. On line 143 there is a for loop
-	; that sets each field line property. The color of the field line can be gotten here from the
-	; olist object. The olist object is created by pfss_view_create.
+		;  first restore the file containing the coronal field model
+
+		;  date/time is set here to Apr 5, 2003 for demonstration purposes, but any
+		;  SSW formatted date/time will do
+		pfss_restore,pfss_time2file(date,/ssw_cat,/url)  ;  for all users
+		;pfss_restore,pfss_time2file('2003-04-05')   ;  for users at LMSAL
+
+		;  starting points to be on a regular grid covering the full disk, with a
+		;  starting radius of r=1.5 Rsun
+		invdens = 10 ;  factor inverse to line density, i.e. lower values = more lines
+		pfss_field_start_coord,5,invdens,radstart=1.5
 
 
-	;coord = [1.0, stth, stph]
+		nlines = 200
+		str = dblarr(nlines)
+		str[*] = 2.5
 
-	;for i=0, n_elements(stth)-1 do begin
-	;	coord = [1.0, stth[i], stph[i]]
-	;	CONVERT_STEREO_COORD, '2010-08-10T00:00', coord, 'HEE', 'HEEQ'
-;		new_stth[i] = coord[1]
-	;endfor
+		lat0 = 89.0
+		lat1 = 91.0
+		stth = ( dindgen(nlines)*(lat1 - lat0)/(nlines-1.) ) + lat0
+		stth = stth*!dtor
 
-	;------------------------------------
+		lon0 = -180.0
+		lon1 = 180.0
+		stph = ( dindgen(nlines)*(lon1 - lon0)/(nlines-1.) ) + lon0
+		stph = stph*!dtor
 
-	rad = ptr
-	lat = 90.0 - ptth*!radeg
-	lon = (ptph)*!radeg + 180.0
+		junk = execute('pfss_trace_field')
 
-	save, br, rad, lat, lon, filename = '~/ELEVATE/data/pfss/connected_field_20110215.sav'
 
-	window, 0
-	pfss_mag_create, magout, 4, 1800.0, 2, file='~/ELEVATE/data/pfss/synopMr_2150.fits'
-	plot_image, magout > (-100) < 200
+		; To get the color of these lines, go to pfss_draw_field3.pro. On line 143 there is a for loop
+		; that sets each field line property. The color of the field line can be gotten here from the
+		; olist object. The olist object is created by pfss_view_create.
 
-	set_line_color
-	for i=0, 199 do plots, ptph_deg[*, i], ptth_deg[*, i]*10.0, psym=3, /data, color=3
+		;-------------------------------------------;
+		;		Determine open field colours
+		mag_determine_color, date, rix, theta, nstep, ptr, ptth, ptph, lat, lon, br
+		;------------------------------------
 
+		rad = ptr
+		lat = 90.0 - ptth*!radeg
+		lon = (ptph)*!radeg + 180.0
+
+		date_str2 = time2file(date, /date_only)
+		save, br, rad, lat, lon, filename = '~/ELEVATE/data/'+date+'/SDO/HMI/connected_field_'+date_str2+'.sav'
+
+
+		mag_synoptic_map_plot, date, /post
+	endif
+	
 END

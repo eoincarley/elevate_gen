@@ -40,7 +40,7 @@ pro plot_nrh_tri_color, time, freqs, x_size, y_size, $
         t0 = anytim(time, /utim) + i
         t0str = anytim(t0, /yoh, /trun, /time_only)
 
-        cd, '~/Data/2014_apr_18/radio/nrh/'
+        cd, '~/Data/2014_apr_18/radio/nrh/clean_wresid/'
         filenames = findfile('*.fts')
 
 
@@ -92,8 +92,10 @@ pro plot_nrh_tri_color, time, freqs, x_size, y_size, $
 
         xposition = x_size+40
 
-
-        ;setup_ps, '~/Data/2014_apr_18/radio/images_3col/nrh_3col_image1.eps', x_size+border, y_size+border ;'+string(i - start_index, format='(I03)' )+'.eps', x_size+border, y_size+border
+        hdr_freqs = [nrh_hdr0.freq, nrh_hdr1.freq, nrh_hdr2.freq]
+        hdr_freqs = string(hdr_freqs, format='(I03)')
+        
+        setup_ps, '~/Data/2014_apr_18/radio/images_3col/nrh_3col_'+hdr_freqs[0]+hdr_freqs[1]+hdr_freqs[2]+'_'+time2file(t0)+'.eps', x_size+border, y_size+border ;'+string(i - start_index, format='(I03)' )+'.eps', x_size+border, y_size+border
 
             plot_image, im_zoom, true=3, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $
@@ -131,21 +133,19 @@ pro plot_nrh_tri_color, time, freqs, x_size, y_size, $
 
             plot_helio, nrh_hdr0.date_obs, $
                 /over, $
-                gstyle=0, $
+                gstyle=1, $
                 gthick=1.5, $  
                 gcolor=255, $
                 grid_spacing=15.0 
 
            
             stamp_date_nrh, nrh_hdr0, nrh_hdr1, nrh_hdr2
-            hdr_freqs = [nrh_hdr0.freq, nrh_hdr1.freq, nrh_hdr2.freq]
-            hdr_freqs = string(hdr_freqs, format='(I03)')
 
             date = time2file(t0, /date_only)
             freq_string = string(nrh_hdr0.freq, format='(I03)') + '_'+ string(nrh_hdr1.freq, format='(I03)') + '_' +string(nrh_hdr2.freq, format='(I03)')
 
-        ;device, /close
-        ;set_plot, 'x'
+        device, /close
+        set_plot, 'x'
 STOP
         print, i
         print, '-------------------'

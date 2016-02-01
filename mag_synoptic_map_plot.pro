@@ -14,11 +14,40 @@ pro setup_ps, name
 
 end
 
+pro flare_pos_string_parse, pos_string, $
+	lat_pos = lat_pos, lon_pos = lon_pos, err=err
 
-pro mag_synoptic_map_plot, postscript=postscript
+	err=0
+	nors = strmid(pos_string, 0, 1)
+	wore = strmid(pos_string, 3, 1)
+
+	case nors of
+		'N': lat_sign = 1.0
+		'S': lat_sign = -1.0
+		 else: err=1
+	endcase
+
+	case wore of
+		'W': lon_sign = 1.0
+		'E': lon_sign = -1.0
+		 else: err=1
+	endcase
+
+	if err eq 0 then begin	
+		lat_pos = float(strmid(pos_string, 1, 2))*lat_sign
+		lon_pos = float(strmid(pos_string, 4, 2))*lon_sign
+	endif else begin
+		print, 'Flare location parsing error.'
+	endelse
+
+END
+
+
+
+pro mag_synoptic_map_plot, date, postscript=postscript
 
 	;------------Read the synoptic map-------------;
-	date_str = '2011-03-07'
+	date_str = date
 	folder = '~/ELEVATE/data/'+date_str+'/'
 	file = findfile(folder + '/SDO/HMI/hmi.Synoptic_Mr_720s*.fits')
 	mreadfits, file, hdr, data
@@ -33,7 +62,7 @@ pro mag_synoptic_map_plot, postscript=postscript
 		setup_ps, folder + 'SDO/HMI/HMI_synoptic_map_'+flare_date+'_carr.eps'
 	endif else begin			
 		loadct, 0
-		window, 0, xs=1250, ys=550
+		window, 2, xs=1250, ys=550
 		!p.charsize = 1.5
 	endelse
 	pos = [0.12, 0.12, 0.9, 0.9]
@@ -67,7 +96,6 @@ pro mag_synoptic_map_plot, postscript=postscript
 				/ys, $
 				yticklen=-0.01
 
-
 		;------------Oplot field lines-------------;
 		mag_oplot_open_lines, data, folder
 
@@ -80,7 +108,7 @@ pro mag_synoptic_map_plot, postscript=postscript
 	;----------------------------------------------------;
 	one_day_rot = (TIM2CARR(flare_time))[0] - (TIM2CARR(tstop))[0]
 	; The 16th at 17:30 is the last observation to produce the map. Therefore the active region rotated 
-	; an extra day ahead of the flare time (15th) on the map. The PFSS is also produce from the map
+	; an extra day ahead of the flare time (15th) on the map. The PFSS is also produced from the map
 	; that was finalised on the 16th. In order to get the map and PFSS on the day of the flare
 	; it is necessary to rotate back the position of the active region at the time of the flare.
 
@@ -137,7 +165,7 @@ pro mag_synoptic_map_plot, postscript=postscript
 
 
 		open_field_file = findfile(folder + 'SDO/HMI/connected_field_*.sav')
-		colors_file = findfile(folder + 'SDO/HMI/open_colours_*.sav')
+		colors_file = findfile(folder + 'SDO/HMI/open_colour_*.sav')
 		restore, open_field_file[0], /verb
 		restore, colors_file[0], /verb
 
@@ -147,7 +175,7 @@ pro mag_synoptic_map_plot, postscript=postscript
 		colors[where(open eq -1)] = 3
 
 		lon = (lon - one_day_rot)*10.0					; For use on synoptic map.
-		sinlat = sin(lat*!dtor)				; Sine of the latitude.
+		sinlat = sin(lat*!dtor)							; Sine of the latitude.
 		ypix = lat
 
 		nBlines = (size(rad))[2]
@@ -198,16 +226,16 @@ pro mag_synoptic_map_plot, postscript=postscript
 
 		
 		set_line_color
-		plotsym, 0
+		;plotsym, 0
 		plots, pixx_theta, pixy_lat, $
-				 psym=8, $
+				 psym=4, $
 				 color=5, $
 				 thick=8, $
 				 symsize=3
 
 
 		;----------------------------------------------------;
-		;	  		Plot Flare position
+		;	  			Plot Flare position
 		;----------------------------------------------------;
 
 		flare_pos_string_parse, event_info.flare_location, $
@@ -223,11 +251,11 @@ pro mag_synoptic_map_plot, postscript=postscript
 
 			
 			set_line_color
-			plotsym, 0
+			;plotsym, 0
 			plots, pixx_theta, pixy_lat, $
 					 psym=2, $
-					 color=6, $
-					 thick=3, $
+					 color=10, $
+					 thick=7, $
 					 symsize=3	
 		endif			 
 
@@ -238,38 +266,7 @@ pro mag_synoptic_map_plot, postscript=postscript
 
 	cd, folder + 'SDO/HMI/
 	spawn, 'convert -density 70 HMI_synoptic_map_'+flare_date+'_heeq.eps -flatten HMI_synoptic_map_'+flare_date+'_heeq.png
-	spawn, 'cp HMI_synoptic_map_'+flare_date+'_heeq.png ~/ELEVATE/website/maths_server_mirror/'+date_str+'/SDO/'
-
-	stop
+	;spawn, 'cp HMI_synoptic_map_'+flare_date+'_heeq.png ~/ELEVATE/website/maths_server_mirror/'+date_str+'/SDO/'
 	
 
 END
-
-pro flare_pos_string_parse, pos_string, $
-	lat_pos = lat_pos, lon_pos = lon_pos, err=err
-
-	err=0
-	nors = strmid(pos_string, 0, 1)
-	wore = strmid(pos_string, 3, 1)
-
-	case nors of
-		'N': lat_sign = 1.0
-		'S': lat_sign = -1.0
-		 else: err=1
-	endcase
-
-	case wore of
-		'W': lon_sign = 1.0
-		'E': lon_sign = -1.0
-		 else: err=1
-	endcase
-
-	if err eq 0 then begin	
-		lat_pos = float(strmid(pos_string, 1, 2))*lat_sign
-		lon_pos = float(strmid(pos_string, 4, 2))*lon_sign
-	endif else begin
-		print, 'Flare location parsing error.'
-	endelse
-
-END
-	

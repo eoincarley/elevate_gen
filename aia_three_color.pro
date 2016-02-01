@@ -35,8 +35,8 @@ END
 pro stamp_date, i_a, i_b, i_c
    
    set_line_color
-   xpos_aia_lab = 0.10
-   ypos_aia_lab = 0.8
+   xpos_aia_lab = 0.15
+   ypos_aia_lab = 0.79
 
    xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
    xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
@@ -86,7 +86,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
   
     if n_elements(fls_a) lt 5 or n_elements(fls_b) lt 5 or n_elements(fls_c) lt 5 then goto, files_missing
 
-    shrink = 1.   ;shrink image size
+    shrink = 2.   ;shrink image size e.g. 2 for 0.5
     if keyword_set(zoom) then begin
     
         read_sdo, fls_a[0], i_a, /nodata, only_tags='cdelt1,cdelt2,naxis1,naxis2', /mixed_comp, /noshell   
@@ -249,11 +249,11 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     ;        *********************************
     ;-------------------------------------------------;
 
-    lwr_lim = 180   ; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
+    lwr_lim = 5   	; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
                     ; 190 on cool AIA channels for good CME legs.
                     ; 185 for detached EUV wave
     img_num = lwr_lim
-    for i = lwr_lim, 190 do begin ;n_elements(fls_211)-1 do begin
+    for i = lwr_lim,n_elements(fls_211)-1 do begin
       
         get_utc, start_loop_t, /cc
 
@@ -302,9 +302,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
 
         ENDIF ELSE BEGIN
             ;Simply runs processing in series, as opposed to parallel
-            aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /nrgf
-            aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /nrgf
-            aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /nrgf
+            aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /ratio
+            aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /ratio
+            aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /ratio
         ENDELSE
      
         ; Check that the images are closely spaced in time
@@ -356,7 +356,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
                 ; /noyticks, $
                 ; /noaxes, $
                 thick=2.5, $
-                color=0, $
+                color=1, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $ 
                 /normal, $
                 /noerase, $
@@ -375,7 +375,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
 
             stamp_date, i_a, i_b, i_c
 
-            oplot_nrh_on_three_color, i_c.date_obs ;For the 2014-April-Event
+;            oplot_nrh_on_three_color, i_c.date_obs ;For the 2014-April-Event
 
         if keyword_set(postscript) then begin
             device, /close
@@ -390,7 +390,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             img = tvrd(/true)
             ;  ; write_png, 'SDO_3col_plain_'+time2file(i_a.t_obs, /sec)+'.png', img
             ;  image_loc_name = folder + '/image_'+string(i-lwr_lim, format='(I03)' )+'.png' 
-            cd, '~
+            cd, '~'
             write_png, image_loc_name , img
         endif
         print, img_num
@@ -404,8 +404,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         print,'-------------------'
         print,'Currently '+string(loop_time, format='(I04)')+' seconds per 3 color image.'
         print,'-------------------'
-
-;STOP      
+   
         ;if anytim(i_a.date_obs, /utim) gt time_stop then BREAK  ;For the 2014-April-Event
     endfor
 

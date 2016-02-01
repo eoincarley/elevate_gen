@@ -1,7 +1,7 @@
 pro mag_oplot_open_lines, data, folder
 		
 	open_field_file = findfile(folder + 'SDO/HMI/connected_field_*.sav')
-	colors_file = findfile(folder + 'SDO/HMI/open_colours_*.sav')
+	colors_file = findfile(folder + 'SDO/HMI/open_colour_*.sav')
 	restore, open_field_file[0], /verb
 	restore, colors_file[0], /verb
 
