@@ -35,8 +35,8 @@ END
 pro stamp_date, i_a, i_b, i_c
    
    set_line_color
-   xpos_aia_lab = 0.075
-   ypos_aia_lab = 0.78
+   xpos_aia_lab = 0.1
+   ypos_aia_lab = 0.8
 
    xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
    xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
@@ -56,9 +56,11 @@ END
 
 pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             zoom=zoom, parallelise=parallelise, winnum=winnum, $
-            hot = hot, postscript=postscript
+            hot = hot, postscript=postscript, im_type=im_type
+
+    if ~keyword_set(im_type) then im_type = 'total_b'        
    
-    !p.charsize = 1.3
+    !p.charsize = 1.5
     folder = '~/Data/elevate_db/'+date+'/SDO/AIA'
     time_stop = anytim('2014-04-18T13:10:00', /utim)  ;For the 2014-April-Event
 
@@ -86,20 +88,26 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
   
     if n_elements(fls_a) lt 5 or n_elements(fls_b) lt 5 or n_elements(fls_c) lt 5 then goto, files_missing
 
-    array_size = 4096
-    shrink = 2.   ;shrink image size
+    array_size = 1024
+    downsize = array_size/4096.
+    shrink = 0.5   ;shrink image size
     if keyword_set(zoom) then begin
     
         read_sdo, fls_a[0], i_a, /nodata, only_tags='cdelt1,cdelt2,naxis1,naxis2', /mixed_comp, /noshell   
         ;FOV = [20.0, 20.0]
         ;CENTER = [800.0, -800.0]
-        FOV = [20, 20]
-        CENTER = [900.0, -800.0] ;[500.0, -350.0];
+        FOV = [3, 3]
+        CENTER = [520.0, -220] ;[500.0, -350.0];
         
-        x0 = (CENTER[0]/i_a.cdelt1 + (i_a.naxis1/2.0)) - (FOV[0]*60.0/i_a.cdelt1)/2.0
-        x1 = (CENTER[0]/i_a.cdelt1 + (i_a.naxis1/2.0)) + (FOV[0]*60.0/i_a.cdelt1)/2.0
-        y0 = (CENTER[1]/i_a.cdelt2 + (i_a.naxis2/2.0)) - (FOV[1]*60.0/i_a.cdelt2)/2.0
-        y1 = (CENTER[1]/i_a.cdelt2 + (i_a.naxis2/2.0)) + (FOV[1]*60.0/i_a.cdelt2)/2.0
+        arcs_per_pixx = i_a.cdelt1/downsize
+        arcs_per_pixy = i_a.cdelt2/downsize
+        naxisx = i_a.naxis1*downsize
+        naxisy = i_a.naxis1*downsize
+
+        x0 = (CENTER[0]/arcs_per_pixx + (naxisx/2.0)) - (FOV[0]*60.0/arcs_per_pixx)/2.0
+        x1 = (CENTER[0]/arcs_per_pixx + (naxisx/2.0)) + (FOV[0]*60.0/arcs_per_pixx)/2.0
+        y0 = (CENTER[1]/arcs_per_pixy + (naxisy/2.0)) - (FOV[1]*60.0/arcs_per_pixy)/2.0
+        y1 = (CENTER[1]/arcs_per_pixy + (naxisy/2.0)) + (FOV[1]*60.0/arcs_per_pixy)/2.0	
         
         ; The following if statements prevent the zoom and center from 
         ; going outside the array area
@@ -107,30 +115,29 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         	diff = abs(x0 - 0)
         	x1 = x1 + abs(diff)
         	x0 = x0 > 0.0
-        	CENTER[1] = CENTER[1] + diff*i_a.cdelt2
+        	CENTER[1] = CENTER[1] + diff*arcs_per_pixx
         endif	
         if x1 gt array_size then begin
         	diff = abs(x1 - array_size)
         	x1 = x1 < (array_size-1.)
         	x0 = (x0 - diff) > 0.0
-        	CENTER[0] = CENTER[0] - diff*i_a.cdelt1
+        	CENTER[0] = CENTER[0] - diff*arcs_per_pixx
         endif	
         if y0 lt 0.0 then begin
         	diff = abs(y0 - 0)
         	y1 = y1 + abs(diff)
         	y0 = y0 > 0.0
-        	CENTER[1] = CENTER[1] + diff*i_a.cdelt2
+        	CENTER[1] = CENTER[1] + diff*arcs_per_pixy
         endif	
         if y1 gt array_size then begin
         	diff = abs(y1 - array_size)
         	y1 = y1 < (array_size-1.)
         	y0 = (y0 - diff) > 0.0
-        	CENTER[1] = CENTER[1] - diff*i_a.cdelt2
+        	CENTER[1] = CENTER[1] - diff*arcs_per_pixy
         endif	
 
         x_range = [x0, x1]  
         y_range = [y0, y1]    
-
 
         if (x_range[1]-x_range[0]) gt 1024 or (y_range[1]-y_range[0]) gt 1024 then begin
             if (x_range[1]-x_range[0]) ge (y_range[1]-y_range[0]) then begin
@@ -152,7 +159,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         y_range = [0,  array_size-1]
         x_size = 1024
         y_size = 1024
-        border = 200
+        border = 600
     endelse
 
     x_size = x_size/shrink
@@ -262,7 +269,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     fls_171 = f_c[loc_171]
     
     ; Setup plotting parameters  
-    if keyword_set(xwin) then begin
+    if keyword_set(xwin) and ~keyword_set(postscript) then begin
         loadct, 0, /silent  
         window, winnum, xs = (x_size+border), ys = y_size+border, retain=2
         !p.multi = 0
@@ -279,8 +286,8 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     ;        *********************************
     ;-------------------------------------------------;
 
-    first_img_index = closest(min_tim, anytim('2014-04-18T12:56:21'))
-    last_img_index = closest(min_tim, anytim('2014-04-18T13:02:15'))
+    first_img_index = closest(min_tim, anytim('2014-04-18T12:00:10'))
+    last_img_index = closest(min_tim, anytim('2014-04-18T13:00:00'))
 
     lwr_lim = first_img_index     ; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
                     ; 190 on cool AIA channels for good CME legs.
@@ -314,11 +321,11 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             oBridge3->SetVar, 'fls_171', fls_171
             oBridge3->SetVar, 'i', i
 
-            oBridge1 -> Execute, 'aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /ratio', /nowait
+            oBridge1 -> Execute, 'aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, im_type, imsize = array_size', /nowait
 
-            oBridge2 -> Execute, 'aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /ratio', /nowait
+            oBridge2 -> Execute, 'aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, im_type, imsize = array_size', /nowait
 
-            oBridge3 -> Execute, 'aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /ratio', /nowait
+            oBridge3 -> Execute, 'aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, im_type, imsize = array_size', /nowait
 
             print, 'Waiting for child processes to finish.'
             WHILE (oBridge1->Status() EQ 1 or oBridge2->Status() EQ 1 or oBridge3->Status() EQ 1) DO BEGIN
@@ -335,9 +342,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
 
         ENDIF ELSE BEGIN
             ;Simply runs processing in series, as opposed to parallel
-            aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, xsize=x_size, /ratio
-            aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, xsize=x_size, /ratio
-            aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, xsize=x_size, /ratio
+            aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, im_type, imsize = array_size
+            aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, im_type, imsize = array_size
+            aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, im_type, imsize = array_size
         	
         ENDELSE
      
@@ -361,7 +368,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         loadct, 0, /silent
 
         if keyword_set(postscript) then $
-            setup_ps, '~/image_'+string(img_num-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
+            setup_ps, '~/image_flux_rope_full_sun.eps', x_size+border, y_size+border 			;+string(img_num-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
 
             plot_image, img, true=3, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $
@@ -391,24 +398,25 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
                 ; /noyticks, $
                 ; /noaxes, $
                 thick=2.5, $
-                color=1, $
+                color=0, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $ 
                 /normal, $
                 /noerase, $
                 /notitle, $
-                xticklen=-0.02, $
-                yticklen=-0.02, $
-                fov = FOV,$
-                center = CENTER         
+                xticklen=-0.01, $
+                yticklen=-0.01, $
+                fov = FOV, $
+                center = CENTER, $
+                charsize=5.5       
 
             plot_helio, i_0.date_obs, $
                  /over, $
                  gstyle=0, $
-                 gthick=2.5, $  
-                 gcolor=255, $
+                 gthick=3.5, $  
+                 gcolor=1, $
                  grid_spacing=15.0 
 
-            stamp_date, i_a, i_b, i_c
+    ;stamp_date, i_a, i_b, i_c
 
             ;oplot_nrh_on_three_color, i_c.date_obs      ;For the 2014-April-Event
 
@@ -425,15 +433,15 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             ;	times = [times, anytim(i_a.date_d$obs, /utim)]
             ;	front_pos = [ front_pos, [[x_pos] , [y_pos]]]
             ;endelse	
-                
-
+           
         if keyword_set(postscript) then begin
             device, /close
             set_plot, 'x'
         endif    
+STOP  
         cd, folder  ;change back to aia folder
         
-        ;if keyword_set(xwin) then x2png, folder + '/image_'+string(img_num-lwr_lim, format='(I03)' )+'.png'
+        if keyword_set(xwin) then x2png, folder + '/image_'+string(img_num-lwr_lim+139, format='(I03)' )+'.png'
   
         if keyword_set(zbuffer) then begin
             img = tvrd(/true)
@@ -457,16 +465,15 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
       
         ;if anytim(i_a.date_obs, /utim) gt time_stop then BREAK  ;For the 2014-April-Event
     endfor
-    front_pos = transpose(front_pos)
-    front_pos = {name:'front_xy', times:times, xarcsec:front_pos[0, *], yarcsec:front_pos[1, *]}
-    save, front_pos, filename= folder+'/euv_front_pos_struct.sav'
-STOP
-    ;date = time2file(i_a.t_obs, /date_only) 
-    ;type0 = 'ratio' ;else type0 = 'totB'
-    ;if keyword_set(hot) then chans = 'hot' else chans = 'cool'
-    ;movie_type = '3col_'+type0+'_'+chans ;else movie_type = '3col_ratio' cd, folder
-    ;print, folder 
-    ;spawn, 'ffmpeg -y -r 25 -i image_%03d.png -vb 50M AIA_'+date+'_'+movie_type+'.mpg'
+    ;front_pos = transpose(front_pos)
+    ;front_pos = {name:'front_xy', times:times, xarcsec:front_pos[0, *], yarcsec:front_pos[1, *]}
+    ;save, front_pos, filename= folder+'/euv_front_pos_struct.sav'
+    date = time2file(i_a.t_obs, /date_only) 
+    type0 = 'totB'
+    if keyword_set(hot) then chans = 'hot' else chans = 'cool'
+    movie_type = 'flux_rope_3col_'+type0+'_'+chans ;else movie_type = '3col_ratio' cd, folder
+    print, folder 
+    spawn, 'ffmpeg -y -r 25 -i image_%03d.png -vb 50M AIA_'+date+'_'+movie_type+'.mpg'
 
     ;spawn, 'cp AIA_'+date+'_'+movie_type+'.mpg ~/Dropbox/sdo_movies/'
     ;spawn, 'cp image_000.png ~/Dropbox/sdo_movies/'

@@ -3,7 +3,7 @@ pro oplot_nrh_on_three_color, tstart
 	;				PLOT NRH
 	;tstart = anytim(aia_hdr.date_obs, /utim) 
 	  
-	folder = '~/Data/2014_Apr_18/radio/nrh/'
+	folder = '~/Data/2014_Apr_18/radio/nrh/clean_wresid/'
 	cd, folder
 	nrh_filenames = reverse(findfile('*.fts'))
 
@@ -79,9 +79,9 @@ pro oplot_nrh_on_three_color, tstart
 	;			/normal		
 
 
-		xyouts, xpos_nrh_lab, ypos_nrh_lab, 'NRH '+anytim(nrh_hdr.date_obs, /cc, /trun)+' UT', $
-						/normal, $
-						color=1
+		;xyouts, xpos_nrh_lab, ypos_nrh_lab, 'NRH '+anytim(nrh_hdr.date_obs, /cc, /trun)+' UT', $
+	;					/normal, $
+;						color=1
 
 		;xyouts, xpos_nrh_lab, ypos_nrh_lab, 'NRH '+anytim(nrh_hdr.date_obs, /cc, /trun)+' UT', $
 		;		/normal, $
