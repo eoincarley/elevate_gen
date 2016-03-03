@@ -6,7 +6,8 @@ pro oplot_nrh_on_three_color, tstart
 	folder = '~/Data/2014_Apr_18/radio/nrh/clean_wresid/'
 	cd, folder
 	nrh_filenames = reverse(findfile('*.fts'))
-
+							;[10,	9,	 8,	  7,   6,	5,	 4,	  3,	2]
+							;[445, 432, 408, 327, 298, 270, 228, 173, 150]
 	colors = reverse([2,3,4,5,6,7,8,9,10])
 	;colors = [6, 7, 10]
 	for j=0, 8 do begin
@@ -14,13 +15,10 @@ pro oplot_nrh_on_three_color, tstart
 		t0 = anytim(tstart, /yoh, /trun, /time_only)
 		nrh_file_index = j
 
-
-
 		read_nrh, nrh_filenames[nrh_file_index], $	; 432 MHz
 				nrh_hdr, $
 				nrh_data, $
-				hbeg=t0
-			
+				hbeg=t0			
 							
 		index2map, nrh_hdr, nrh_data, $
 				 nrh_map  
@@ -34,12 +32,31 @@ pro oplot_nrh_on_three_color, tstart
 		top_percent = 0.99
 		levels = (dindgen(nlevels)*(max_val - max_val*top_percent)/(nlevels-1.0)) $
 					+ max_val*top_percent
+					stop
 				;levels = (dindgen(nlevels)*(max_val - 7.0)/(nlevels-1.0)) $
 				;			+ 7.0		
 
-				;			Overlay NRH contours
+				
 		set_line_color
-		
+		plot_map, nrh_map, $
+			/overlay, $
+			/cont, $
+			/noerase, $
+			levels=levels, $
+			;/noxticks, $
+			;/noyticks, $
+			/noaxes, $
+			thick=16, $
+			color=0
+
+		plot_helio, nrh_hdr.date_obs, $
+			/over, $
+			gstyle=0, $
+			gthick=3.0, $	
+			gcolor=255, $
+			grid_spacing=15.0
+
+
 		set_line_color
 		plot_map, nrh_map, $
 			/overlay, $
@@ -48,21 +65,12 @@ pro oplot_nrh_on_three_color, tstart
 			/noxticks, $
 			/noyticks, $
 			/noaxes, $
-			thick=4.0, $
-			color=1	
+			thick=14, $
+			color=colors[j]					 
 
 
-		plot_map, nrh_map, $
-			/overlay, $
-			/cont, $
-			levels=levels, $
-			/noxticks, $
-			/noyticks, $
-			/noaxes, $
-			thick=3.0, $
-			color=colors[j]					 	
-		
 		freq_tag = string(nrh_hdr.freq, format='(I03)')
+		print, 'Brightness temperature max at '+freq_tag+'  MHz: '+string(levels)
 
 		print, 'Frequency: '+freq_tag+' MHz '+'. Color: '+string(j+2)
 		print, '--------'
@@ -81,7 +89,7 @@ pro oplot_nrh_on_three_color, tstart
 
 		;xyouts, xpos_nrh_lab, ypos_nrh_lab, 'NRH '+anytim(nrh_hdr.date_obs, /cc, /trun)+' UT', $
 	;					/normal, $
-;						color=1
+	;					color=1
 
 		;xyouts, xpos_nrh_lab, ypos_nrh_lab, 'NRH '+anytim(nrh_hdr.date_obs, /cc, /trun)+' UT', $
 		;		/normal, $

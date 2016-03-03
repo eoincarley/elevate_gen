@@ -23,19 +23,23 @@ pro aia_process_image, img_name, img_pre_name, hdr, hdr_pre, $
          remove_nans, iscaled_img, iscaled_img, /return_img
          iscaled_img = disk_nrgf_3col_ratio(iscaled_img, hdr, 0, 0, rsub = rsub, rgt=rgt)
          iscaled_img[rsub] = iscaled_img[rsub]*5.0 > (-4.0) < 4.0   
-         iscaled_img[rgt] = iscaled_img[rgt] > (-4.0) < 4.0 
+         iscaled_img[rgt] = iscaled_img[rgt] > (-6.0) < 4.0 
 
-         iscaled_img = filter_image(iscaled_img, /median)
+         ;iscaled_img = filter_image(iscaled_img, /median)
       endif 
 
       if im_type eq 'total_b' then begin
          iscaled_img = img
          undefine, img
          undefine, img_pre
-         iscaled_img = ( iscaled_img - mean(iscaled_img) ) /stdev(iscaled_img)   
+        ; iscaled_img = ( iscaled_img - mean(iscaled_img) ) /stdev(iscaled_img)   
         ; hfreq = iscaled_img - smooth(iscaled_img, 10)
-        ; iscaled_img = 0.5*iscaled_img + 1.6*hfreq
-         iscaled_img = iscaled_img > (-4) < (28)      ;-20 and 28 good for pre-eruptive rope.
+        ; iscaled_img = 0.5*iscaled_img + 1.8*hfreq
+         
+         iscaled_img = alog(iscaled_img>1e-6)
+         iscaled_img = iscaled_img > (3) < (7)      ;-20 and 28 good for pre-eruptive rope.
+         hfreq = iscaled_img - smooth(iscaled_img, 10)
+         iscaled_img = 0.5*iscaled_img + 1.0*hfreq
          iscaled_img = rebin(iscaled_img, imsize, imsize)
       endif   
 
@@ -43,9 +47,9 @@ pro aia_process_image, img_name, img_pre_name, hdr, hdr_pre, $
          iscaled_img = img/img_pre
          undefine, img
          undefine, img_pre
-         iscaled_img = iscaled_img >0.80 <1.1 ;    ;0.85, 1.1 for ratio image
-         iscaled_img = rebin(iscaled_img, imsize, imsize)
-         ;iscaled_img = smooth(iscaled_img, 20)
+         iscaled_img = iscaled_img >(0.5) < 1.3 ;    ;0.80, 1.5 for ratio image
+         ;hfreq = iscaled_img - smooth(iscaled_img, 10)
+         iscaled_img = iscaled_img;*0.5 + 0.5*smooth(iscaled_img, 5)
       endif   
 
  

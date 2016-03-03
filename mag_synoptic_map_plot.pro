@@ -44,7 +44,10 @@ END
 
 
 
-pro mag_synoptic_map_plot, date, postscript=postscript
+pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
+
+	; date='2010-08-10'
+	; Used by mag_syn_map_process.pro
 
 	;------------Read the synoptic map-------------;
 	date_str = date
@@ -57,51 +60,51 @@ pro mag_synoptic_map_plot, date, postscript=postscript
 	restore, folder + date + '_event_info_structure.sav', /verb
 	flare_time = anytim((STRSPLIT(event_info.flare_start_t, ' ', /EXTRACT))[0], /utim)
 	flare_date = time2file(flare_time, /date)
+	degs = [-90, -60, -40, -20, 0, 20, 40, 60, 90]
+	degs_sin = sin(degs*!dtor)
+	degs_label = string(degs, format='(I3)') 
 	
-	if keyword_set(postscript) then begin
-		setup_ps, folder + 'SDO/HMI/HMI_synoptic_map_'+flare_date+'_carr.eps'
-	endif else begin			
-		loadct, 0
-		window, 2, xs=1250, ys=550
-		!p.charsize = 1.5
-	endelse
-	pos = [0.12, 0.12, 0.9, 0.9]
-		;----------------------------------------------------;
-		;	  Plot the synoptic map in Carrington coords.
-		;----------------------------------------------------;
+	if keyword_set(carrington) then begin
+		if keyword_set(postscript) then begin
+			setup_ps, folder + 'SDO/HMI/HMI_synoptic_map_'+flare_date+'_carr.eps'
+		endif else begin			
+			loadct, 0
+			window, 2, xs=1250, ys=550
+			!p.charsize = 1.5
+		endelse
+		pos = [0.12, 0.12, 0.9, 0.9]
+			;----------------------------------------------------;
+			;	  Plot the synoptic map in Carrington coords.
+			;----------------------------------------------------;
 
-		plot_image, data > (-200) < (200), $
-				XTICKFORMAT="(A1)", $
-				YTICKFORMAT="(A1)", $
-				xticklen=0.001, $
-				yticklen=0.001, $
-				title = 'Carrington Rotation '+car_rot_str+' ('+date+')', $
-				position = pos
-				;title = hdr.telescop+' '+hdr.date+' UT'; ystyle=4;xticks=2, yticks=2, ytickname=['', '', ''], xtickname=['','', '']
+			plot_image, data > (-200) < (200), $
+					XTICKFORMAT="(A1)", $
+					YTICKFORMAT="(A1)", $
+					xticklen=0.001, $
+					yticklen=0.001, $
+					title = 'Carrington Rotation '+car_rot_str+' ('+date+')', $
+					position = pos
+					;title = hdr.telescop+' '+hdr.date+' UT'; ystyle=4;xticks=2, yticks=2, ytickname=['', '', ''], xtickname=['','', '']
 
-		axis, xaxis = 0, xr = [0, 360], xticks=6, xtitle = 'Carrington Longitude (deg)', /xs
-		axis, yaxis = 0, yr = [-1, 1], ytitle = 'Sine latitude', /ys, $
-				yticklen=-0.01
+			axis, xaxis = 0, xr = [0, 360], xticks=6, xtitle = 'Carrington Longitude (deg)', /xs
+			axis, yaxis = 0, yr = [-1, 1], ytitle = 'Sine latitude', /ys, $
+					yticklen=-0.01
 
+			axis, yaxis = 1, yr = [-1, 1], $
+					yticks=8, $
+					ytickv = degs_sin, $
+					ytickname = degs_label, $
+					ytitle = 'Latitude (deg)', $
+					/ys, $
+					yticklen=-0.01
 
-		degs = [-90, -60, -40, -20, 0, 20, 40, 60, 90]
-		degs_sin = sin(degs*!dtor)
-		degs_label = string(degs, format='(I3)') 
+			;------------Oplot field lines-------------;
+			mag_oplot_open_lines, data, folder
 
-		axis, yaxis = 1, yr = [-1, 1], $
-				yticks=8, $
-				ytickv = degs_sin, $
-				ytickname = degs_label, $
-				ytitle = 'Latitude (deg)', $
-				/ys, $
-				yticklen=-0.01
-
-		;------------Oplot field lines-------------;
-		mag_oplot_open_lines, data, folder
-
-	if keyword_set(postscript) then begin	
-		device, /close
-	endif
+		if keyword_set(postscript) then begin	
+			device, /close
+		endif
+	endif	
 
 	;----------------------------------------------------;
 	;	  		Now convert to Stonyhurst coords.
@@ -112,7 +115,7 @@ pro mag_synoptic_map_plot, date, postscript=postscript
 	; that was finalised on the 16th. In order to get the map and PFSS on the day of the flare
 	; it is necessary to rotate back the position of the active region at the time of the flare.
 
-	merid_car_lon =  TIM2CARR(tstop) 			; Carrinton Longitude for the central meridian on CR 2100.
+	merid_car_lon =  TIM2CARR(tstop) 			; Carrinton Longitude for the central meridian on CR XXXX.
 	npixx = n_elements(data[*,0])
 	npixy = n_elements(data[0,*])
 	pixels = dindgen(npixx)
@@ -124,8 +127,8 @@ pro mag_synoptic_map_plot, date, postscript=postscript
 
 	; Convert to Stonyhurst Longitude, centered on 180.0
 	stny_lons = dindgen(npixx)*(360.0)/(npixx-1)
-	ind0_snty = round(closest(stny_lons, 180.0))
-	data_stny = [data_stny[ind0_snty:npixx-1, *], data_stny[0:ind0_snty-1, *]]
+	ind1_snty = round(closest(stny_lons, 180.0))
+	data_stny = [data_stny[ind1_snty:npixx-1, *], data_stny[0:ind1_snty-1, *]]
 
 
 	;----------------------------------------------------;
@@ -150,7 +153,7 @@ pro mag_synoptic_map_plot, date, postscript=postscript
 				position = [0.1, 0.1, 0.9, 0.9]
 
 
-		axis, xaxis = 0, xr = [-180, 180], xticks=6, xtitle = 'HEEQ Longitude (deg)', /xs
+		axis, xaxis = 0, xr = [-180, 180], xticks=6, xtitle = 'HEE Longitude (deg)', /xs
 		axis, yaxis = 0, yr = [-1, 1], ytitle = 'Sine latitude', /ys, $
 				yticklen=-0.01
 
@@ -159,7 +162,7 @@ pro mag_synoptic_map_plot, date, postscript=postscript
 				yticks=8, $
 				ytickv = degs_sin, $
 				ytickname = degs_label, $
-				ytitle = 'Latitude (deg)', $
+				ytitle = 'HEE Latitude (deg)', $
 				/ys, $
 				yticklen=-0.01
 
@@ -188,30 +191,57 @@ pro mag_synoptic_map_plot, date, postscript=postscript
 			ypix_line = interpol(ypixels, sinlat_points, sinlat[*, i])
 			ypix[*, i] = ypix_line
 		endfor
-
-
-		;lon_new = lon + 1800.0 
-		;lon_new[where(lon_new gt 3600.0)] = lon_new[where(lon_new gt 3600.0)] - 3600.0
-
-		
-		;lon_new = lon_new  -  1800.0 ;TIM2CARR('2010-08-14T10:00:00')*10.0  - 1800.0
 		
 		lon[where(lon lt 0.0)] = (lon[where(lon lt 0.0)]) + 3600.0
 
 		set_line_color
-			;plots, lon[*, 80], ypix[*, 80], color=4, /data, psym=3
 
-		for i=0, n_elements(lon[0, *])-1 do begin
+		for i=0, 120 do begin ;n_elements(lon[0, *])-1 do begin
 			plots, lon[*,i], ypix[*,i], color=colors[i], /data, psym=3
 		endfor	
+		for i=120, n_elements(lon[0, *])-1 do begin
+			plots, lon[0,i], ypix[0,i], color=colors[i], /data, psym=1, symsize=0.5
+			;wait, 0.01
+		endfor
+		;contour, data_stny, transpose(lon[0,*]), transpose(ypix[0,*]), /overplot, /follow, position = [0.1, 0.1, 0.9, 0.9]
 	
+		restore, '~/ELEVATE/data/'+date_str+'/SDO/HMI/chole_field_'+date+'.sav', /verb
+		xsize = (size(data_stny))[1]
+		ysize = (size(data_stny))[2]
+		openfield = congrid(openfield, xsize, ysize)
+		
+		openfield= [openfield[ind0_snty:npixx-1, *], openfield[0:ind0_snty-1, *]]
+		; Convert to Stonyhurst Longitude, centered on 180.0
+		openfield = [openfield[ind1_snty:npixx-1, *], openfield[0:ind1_snty-1, *]]
 
+
+		pos = where(openfield gt 0.03)
+   		pos = array_indices(openfield, pos)
+   		index_x = pos[0, *]
+   		index_range = dindgen(xsize)
+   		lon_range = findgen(xsize)*(180 + 180)/(xsize-1) - 180
+   		lonpoints = interpol(lon_range, index_range, index_x)
+ 
+   		index_y = pos[1, *]
+   		index_range = findgen(ysize)
+   		lat_range = (findgen(ysize)*(90.+90.)/(ysize-1) - 90.0) 
+   		latpoints = interpol(lat_range, index_range, index_y)
+   		sinlat_points = sin( latpoints*!dtor )
+ 
+   		plot, [-180, 180], [-1, 1], /nodata, /noerase, position = [0.1, 0.1, 0.9, 0.9], /xs, /ys, xtickformat='(A1)', ytickformat='(A1)'
+   		plots, lonpoints, sinlat_points, psym=3
+   		STOP
+		contour, filter_image(openfield, fwhm=20), /overplot, /follow, levels=[-1e-4, 1e-4]
+
+		;contour, openfield, /overplot, /follow, levels=[0.0], color=5
+
+     	STOP
 		;----------------------------------------------------;
 		;	  		Plot position of L1 connection
 		;----------------------------------------------------;
 
-		radius = 1.5e11		; 1AU in meters
-		ang_vel = 2.8e-6	; Angular velocity of the solar equator
+		radius = 1.5e11			; 1AU in meters
+		ang_vel = 2.8e-6		; Angular velocity of the solar equator
 		v_solwind = 3.8e5		; meters per second
 
 		theta = radius*ang_vel/v_solwind
@@ -264,9 +294,9 @@ pro mag_synoptic_map_plot, date, postscript=postscript
 		set_plot, 'x'
 	endif
 
-	cd, folder + 'SDO/HMI/
-	spawn, 'convert -density 70 HMI_synoptic_map_'+flare_date+'_heeq.eps -flatten HMI_synoptic_map_'+flare_date+'_heeq.png
-	;spawn, 'cp HMI_synoptic_map_'+flare_date+'_heeq.png ~/ELEVATE/website/maths_server_mirror/'+date_str+'/SDO/'
+	;cd, folder + 'SDO/HMI/
+	;spawn, 'convert -density 70 HMI_synoptic_map_'+flare_date+'_heeq.eps -flatten HMI_synoptic_map_'+flare_date+'_heeq.png
+		;spawn, 'cp HMI_synoptic_map_'+flare_date+'_heeq.png ~/ELEVATE/website/maths_server_mirror/'+date_str+'/SDO/'
 	
 
 END

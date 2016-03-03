@@ -33,8 +33,13 @@ pro mag_oplot_open_lines, data, folder
 	set_line_color
 		;plots, lon[*, 80], ypix[*, 80], color=4, /data, psym=3
 
-	for i=0, n_elements(lon_new[0, *])-1 do begin
+	for i=0, 119 do begin	;n_elements(lon_new[0, *])-1 do begin
 		plots, lon_new[*,i], ypix[*,i], color=colors[i], /data, psym=3
+	endfor
+
+	for i=0, n_elements(lon_new[0, *])-1 do begin
+		;plots, lon_new[*,i], ypix[*,i], color=colors[i], /data, psym=1, symsize=0.5
+		plots, lon_new[0,i], ypix[0,i], color=colors[i], /data, psym=1, symsize=1.5
 	endfor	
 	
 

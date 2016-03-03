@@ -32,6 +32,8 @@ END
 pro plot_nrh_tri_color, time, freqs, x_size, y_size, $
          hdr_freqs = hdr_freqs
 
+    ; plot_nrh_tri_color, '2014-04-18T12:57:57', [0,1,2], 500, 500     
+
     start_index=0          ;22,114,206, '2010-04-18T12:56:00'
     for i=0, 10 do begin     
 
@@ -67,6 +69,7 @@ pro plot_nrh_tri_color, time, freqs, x_size, y_size, $
         nrh_data0 = nrh_data0 > max_value*0.2 < max_value*0.7
         nrh_data1 = nrh_data1 > max_value*0.2 < max_value*0.7
         nrh_data2 = nrh_data2 > max_value*0.2 < max_value*0.7 
+        stop
 
         xcen = nrh_hdr0.crpix1
         ycen = nrh_hdr0.crpix2
@@ -95,7 +98,7 @@ pro plot_nrh_tri_color, time, freqs, x_size, y_size, $
         hdr_freqs = [nrh_hdr0.freq, nrh_hdr1.freq, nrh_hdr2.freq]
         hdr_freqs = string(hdr_freqs, format='(I03)')
         
-        setup_ps, '~/Data/2014_apr_18/radio/images_3col/nrh_3col_'+hdr_freqs[0]+hdr_freqs[1]+hdr_freqs[2]+'_'+time2file(t0)+'.eps', x_size+border, y_size+border ;'+string(i - start_index, format='(I03)' )+'.eps', x_size+border, y_size+border
+        ;setup_ps, '~/Data/2014_apr_18/radio/images_3col/nrh_3col_'+hdr_freqs[0]+hdr_freqs[1]+hdr_freqs[2]+'_'+time2file(t0)+'.eps', x_size+border, y_size+border ;'+string(i - start_index, format='(I03)' )+'.eps', x_size+border, y_size+border
 
             plot_image, im_zoom, true=3, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $
@@ -141,11 +144,15 @@ pro plot_nrh_tri_color, time, freqs, x_size, y_size, $
            
             stamp_date_nrh, nrh_hdr0, nrh_hdr1, nrh_hdr2
 
+            min_tb = string(round(alog10(max_value*0.2)*10.0)/10.0, format='(f3.1)')
+            max_tb = string(round(alog10(max_value*0.7)*10.0)/10.0, format='(f3.1)')
+            xyouts, 0.19, 0.19, min_tb+' < log!L10!N(T!LB!N [K]) < '+max_tb, /normal
+
             date = time2file(t0, /date_only)
             freq_string = string(nrh_hdr0.freq, format='(I03)') + '_'+ string(nrh_hdr1.freq, format='(I03)') + '_' +string(nrh_hdr2.freq, format='(I03)')
 
-        device, /close
-        set_plot, 'x'
+        ;device, /close
+        ;set_plot, 'x'
 STOP
         print, i
         print, '-------------------'
