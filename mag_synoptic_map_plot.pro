@@ -14,6 +14,26 @@ pro setup_ps, name
 
 end
 
+pro get_chole_pos, openfield, xsize, ysize, $		; input
+		lon_points, lat_points, $					; output
+		positive=positive, negative=negative		; keywords
+	
+	if keyword_set(positive) then pos = where(openfield gt 0.03) else pos = where(openfield lt -0.03)
+
+	pos = array_indices(openfield, pos)
+	index_x = pos[0, *]
+	index_range = dindgen(xsize)
+	lon_range = findgen(xsize)*(180 + 180)/(xsize-1) - 180
+	lon_points = interpol(lon_range, index_range, index_x)
+
+	index_y = pos[1, *]
+	index_range = findgen(ysize)
+	lat_range = (findgen(ysize)*(90.+90.)/(ysize-1) - 90.0) 
+	latpoints = interpol(lat_range, index_range, index_y)
+	sinlat_points = sin( latpoints*!dtor )
+
+END
+
 pro flare_pos_string_parse, pos_string, $
 	lat_pos = lat_pos, lon_pos = lon_pos, err=err
 
@@ -204,7 +224,10 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 			;wait, 0.01
 		endfor
 		;contour, data_stny, transpose(lon[0,*]), transpose(ypix[0,*]), /overplot, /follow, position = [0.1, 0.1, 0.9, 0.9]
-	
+		
+		;----------------------------------------------------;
+		;	  			  Plot coronal holes
+		;----------------------------------------------------;
 		restore, '~/ELEVATE/data/'+date_str+'/SDO/HMI/chole_field_'+date+'.sav', /verb
 		xsize = (size(data_stny))[1]
 		ysize = (size(data_stny))[2]
@@ -214,24 +237,30 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 		; Convert to Stonyhurst Longitude, centered on 180.0
 		openfield = [openfield[ind1_snty:npixx-1, *], openfield[0:ind1_snty-1, *]]
 
+		get_chole_pos, openfield, xsize, ysize, $ 	; input
+				lon_points_pos, lat_points_pos, $			; output	
+				/positive							; keywords		
 
-		pos = where(openfield gt 0.03)
-   		pos = array_indices(openfield, pos)
-   		index_x = pos[0, *]
-   		index_range = dindgen(xsize)
-   		lon_range = findgen(xsize)*(180 + 180)/(xsize-1) - 180
-   		lonpoints = interpol(lon_range, index_range, index_x)
+		get_chole_pos, openfield, xsize, ysize, $ 	; input
+				lon_points_neg, lat_points_neg, $			; output	
+				/negative							; keywords			
+
  
-   		index_y = pos[1, *]
-   		index_range = findgen(ysize)
-   		lat_range = (findgen(ysize)*(90.+90.)/(ysize-1) - 90.0) 
-   		latpoints = interpol(lat_range, index_range, index_y)
-   		sinlat_points = sin( latpoints*!dtor )
- 
-   		plot, [-180, 180], [-1, 1], /nodata, /noerase, position = [0.1, 0.1, 0.9, 0.9], /xs, /ys, xtickformat='(A1)', ytickformat='(A1)'
-   		plots, lonpoints, sinlat_points, psym=3
-   		STOP
-		contour, filter_image(openfield, fwhm=20), /overplot, /follow, levels=[-1e-4, 1e-4]
+   		plot, [-180, 180], [-1, 1], $
+   			/nodata, $
+   			/noerase, $
+   			position = [0.1, 0.1, 0.9, 0.9], $
+   			/xs, $
+   			/ys, $
+   			xtickformat='(A1)', $
+   			ytickformat='(A1)'
+
+   		plots, lon_points_pos, sinlat_points_pos, psym=3, color=3	
+   		plots, lon_points_neg, sinlat_points_neg, psym=3, color=5
+   	
+
+   	
+		;contour, filter_image(openfield, fwhm=20), /overplot, /follow, levels=[-1e-4, 1e-4]
 
 		;contour, openfield, /overplot, /follow, levels=[0.0], color=5
 
