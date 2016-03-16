@@ -288,7 +288,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     ;        *********************************
     ;-------------------------------------------------;
 
-    first_img_index = closest(min_tim, anytim('2014-04-18T13:11:35'))
+    first_img_index = closest(min_tim, anytim('2014-04-18T12:55:55'))
     last_img_index = closest(min_tim, anytim('2014-04-18T13:12:00'))
 
     lwr_lim = first_img_index     ; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
@@ -370,7 +370,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         loadct, 0, /silent
 
         if keyword_set(postscript) then $
-            setup_ps, '~/source_merge2.eps', x_size+border, y_size+border 			;+string(img_num-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
+            setup_ps, '~/source_merge1.eps', x_size+border, y_size+border 			;+string(img_num-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
 
             plot_image, img, true=3, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $
@@ -428,8 +428,8 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             ;save, x, y, filename='~/Data/2014_apr_18/sdo/points_faintloop2.sav' 
             ;dam_orfees_plot_gen, time_marker=anytim(i_c.date_obs, /utim)
             restore,'~/Data/2014_apr_18/sdo/points_faintloop2.sav' 
-            plots, x, y, /data, psym=1, color=5, thick=6, symsize=2.0
-            plots, x, y, /data, psym=1, color=0, thick=1.0, symsize=1.0
+            ;plots, x, y, /data, psym=1, color=5, thick=6, symsize=2.0
+            ;plots, x, y, /data, psym=1, color=0, thick=1.0, symsize=1.0
 
 			;cursor, x_pos, y_pos, /data 
             ;if i eq lwr_lim then begin
@@ -440,9 +440,6 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             ;	front_pos = [ front_pos, [[x_pos] , [y_pos]]]
             ;endelse	
            
-
-
-
         if keyword_set(postscript) then begin
             device, /close
             set_plot, 'x'

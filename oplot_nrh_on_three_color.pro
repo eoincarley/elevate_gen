@@ -10,10 +10,11 @@ pro oplot_nrh_on_three_color, tstart
 							;[445, 432, 408, 327, 298, 270, 228, 173, 150]
 	colors = reverse([2,3,4,5,6,7,8,9,10])
 	;colors = [6, 7, 10]
-	for j=0, 8 do begin
+	inds = [0,1,2]
+	for j=0, n_elements(inds)-1 do begin
 		;tstart =  anytim('2014-04-18T13:09:35', /utim); anytim(aia_hdr.date_obs, /utim) ;anytim('2014-04-18T12:35:11', /utim)
 		t0 = anytim(tstart, /yoh, /trun, /time_only)
-		nrh_file_index = j
+		nrh_file_index = inds[j]
 
 		read_nrh, nrh_filenames[nrh_file_index], $	; 432 MHz
 				nrh_hdr, $
@@ -32,9 +33,9 @@ pro oplot_nrh_on_three_color, tstart
 		top_percent = 0.99
 		levels = (dindgen(nlevels)*(max_val - max_val*top_percent)/(nlevels-1.0)) $
 					+ max_val*top_percent
-					stop
-				;levels = (dindgen(nlevels)*(max_val - 7.0)/(nlevels-1.0)) $
-				;			+ 7.0		
+
+		;levels = (dindgen(nlevels)*(9.0 - 8.5)/(nlevels-1.0)) $
+	;				+ 8.5		
 
 				
 		set_line_color
@@ -71,7 +72,6 @@ pro oplot_nrh_on_three_color, tstart
 
 		freq_tag = string(nrh_hdr.freq, format='(I03)')
 		print, 'Brightness temperature max at '+freq_tag+'  MHz: '+string(levels)
-
 		print, 'Frequency: '+freq_tag+' MHz '+'. Color: '+string(j+2)
 		print, '--------'
 

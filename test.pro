@@ -35,10 +35,11 @@ pro get_chole_pos, openfield, xsize, ysize, $		; input
 END
 
 pro calc_helio_curr_sheet, extrem_map, lon, ypix, colors, $
-		lon_points,	lat_points
+		xpos, ypos
 
 	; This involves a basic filling of all space by positive and negative field, then searching
 	; for space of zero field in between.
+	stop
 
 	extrem_map[*] = 0
 	xsize = (size(extrem_map))[1]
@@ -60,6 +61,8 @@ pro calc_helio_curr_sheet, extrem_map, lon, ypix, colors, $
 		endif
 	endfor
 	
+	STOP
+
 	result = filter_image(extrem_map, fwhm=5)
 	for i=0, xsize-1 do begin
 		slice = smooth(result[i, *], 10)
@@ -74,17 +77,6 @@ pro calc_helio_curr_sheet, extrem_map, lon, ypix, colors, $
 			ypos = [ypos, cross_over]
 		endelse		
 	endfor	
-
-	ypos = smooth(ypos, 150, /edge_mirror)		
-	xsize = (size(extrem_map))[1]
-	ysize = (size(extrem_map))[2]
-	index_range = dindgen(xsize)
-	lon_range = findgen(xsize)*(180 + 180)/(xsize-1) - 180
-	lon_points = transpose(interpol(lon_range, index_range, xpos))
-
-	index_range = findgen(ysize)
-	lat_range = (findgen(ysize)*(1.+1.)/(ysize-1) - 1.0) 
-	lat_points = interpol(lat_range, index_range, ypos)
 
 END		
 
@@ -174,7 +166,7 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 					/ys, $
 					yticklen=-0.01
 
-			plot, [-180, 180], [-1, 1], $
+			plot, [0, 360], [-1, 1], $
 	   			/nodata, $
 	   			/noerase, $
 	   			position = pos, $
@@ -273,8 +265,8 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 		colors[where(open eq -1)] = 3
 
 		lon_new = lon - 180.0 
-		lon_new[where(lon_new gt 180.0)] = lon_new[where(lon_new gt 180.0)] - 360.0
-		lon_new[where(lon_new lt -180.0)] = lon_new[where(lon_new lt -180.0)] + 180.0
+		lon_new[where(lon_new gt 360.0)] = lon_new[where(lon_new gt 360.0)] - 360.0
+		lon_new[where(lon_new lt 0.0)] = lon_new[where(lon_new lt 0.0)] + 360.0
 
 		stny_lons = lon_new - merid_car_lon[0] - one_day_rot 
 		sinlat = sin(lat*!dtor)							; Sine of the latitude.
@@ -289,31 +281,31 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 		for i=0, n_elements(stny_lons[0, *])-1 do begin
 			plots, stny_lons[0,i], sinlat[0,i], color=colors[i], /data, psym=3, symsize=1.5
 		endfor	
-STOP
 		;----------------------------------------------------;
 		;	  	    Plot heliospheric current sheet. 
 		;           Not the most efficient way, but 
 		;           couldn't find anything else.
-		;			Calculation also done in pixel coords 
-		;			and converted to long and sinlat
 		;----------------------------------------------------;
+		
 
-   		open_field_file = findfile(folder + 'SDO/HMI/connected_field_*.sav')
+		open_field_file = findfile(folder + 'SDO/HMI/connected_field_*.sav')
 		colors_file = findfile(folder + 'SDO/HMI/open_colour_*.sav')
 		restore, open_field_file[0], /verb
 		restore, colors_file[0], /verb
+
 
 		colors = intarr(n_elements(open))
 		colors[where(open eq 1)] = 4
 		colors[where(open eq -1)] = 3
 
-		lon = (lon - merid_car_lon[0] - one_day_rot)*10.0		; For use on synoptic map.
-		sinlat = sin(lat*!dtor)									; Sine of the latitude.
+		lon = (lon - one_day_rot)*10.0					; For use on synoptic map.
+		sinlat = sin(lat*!dtor)							; Sine of the latitude.
 		ypix = lat
 
 		nBlines = (size(rad))[2]
 		npoints = (size(data))[2]
 		ypixels = dindgen(npoints)
+
 
 		sinlat_points = (dindgen(npoints)*(1.0 - (-1.0))/(npoints-1) ) + (-1.0)
 
@@ -321,22 +313,19 @@ STOP
 			ypix_line = interpol(ypixels, sinlat_points, sinlat[*, i])
 			ypix[*, i] = ypix_line
 		endfor
-		
-		lon[where(lon lt 0.0)] = (lon[where(lon lt 0.0)]) + 3600.0
-		calc_helio_curr_sheet, data_stny, lon, ypix, colors, $
-				lon_points, lat_points		
+		calc_helio_curr_sheet, data_stny, lon*10.0, ypix, colors, $
+				xpos, ypos
 
-		plot, [-180, 180], [-1, 1], $
-   			/nodata, $
-   			/noerase, $
-   			position = [0.1, 0.1, 0.9, 0.9], $
-   			/xs, $
-   			/ys, $
-   			xtickformat='(A1)', $
-   			ytickformat='(A1)', $
-   			yticklen=-0.0001
-
-		plots,	lon_points, lat_points, color=5, /data, linestyle=0, thick=3
+		plot_image, data_stny , $
+				XTICKFORMAT="(A1)", $
+				YTICKFORMAT="(A1)", $
+				xticklen=0.001, $
+				yticklen=0.001, $
+				position = [0.1, 0.1, 0.9, 0.9], $
+				/nodata
+	
+		plots, xpos, smooth(ypos, 150, /edge_mirror), color=5, /data, linestyle=0, thick=3
+		stop
 
 		;----------------------------------------------------;
 		;	  			  Plot coronal holes
