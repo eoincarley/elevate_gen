@@ -50,6 +50,11 @@ pro calc_helio_curr_sheet, extrem_map, lon, ypix, colors, $
 			extrem_map[ lon[*, i]-4>0, ypix[*, i] ] = -1
 			extrem_map[ lon[*, i]+8<xsize, ypix[*, i] ] = -1
 			extrem_map[ lon[*, i]-8>0, ypix[*, i] ] = -1
+
+			extrem_map[ lon[*, i], ypix[*, i]+4<ysize ] = -1
+			extrem_map[ lon[*, i], ypix[*, i]-4<0 ] = -1
+			extrem_map[ lon[*, i], ypix[*, i]+10<ysize ] = -1
+			extrem_map[ lon[*, i], ypix[*, i]-10<0 ] = -1
 		endif
 		if colors[i] eq 4 then begin
 			extrem_map[ lon[*, i], ypix[*, i] ] = 1
@@ -57,14 +62,31 @@ pro calc_helio_curr_sheet, extrem_map, lon, ypix, colors, $
 			extrem_map[ lon[*, i]-4>0, ypix[*, i] ] = 1
 			extrem_map[ lon[*, i]+8<xsize, ypix[*, i] ] = 1
 			extrem_map[ lon[*, i]-8>0, ypix[*, i] ] = 1
+
+			extrem_map[ lon[*, i], ypix[*, i]+4<ysize ] = 1
+			extrem_map[ lon[*, i], ypix[*, i]-4<0 ] = 1
+			extrem_map[ lon[*, i], ypix[*, i]+10<ysize ] = 1
+			extrem_map[ lon[*, i], ypix[*, i]-10<0 ] = 1
 		endif
 	endfor
+	;extrem_map = smooth(extrem_map, 10, /edge_mirror)
 	
-	result = filter_image(extrem_map, fwhm=5)
+	extrem_map = extrem_map+1
+	dims = SIZE(extrem_map, /DIMENSION)  
+	radius=10
+	strucElem = SHIFT(DIST(2*radius+1), radius, radius) LE radius  
+	erodeImg = REPLICATE(MAX(extrem_map), dims[0]+2, dims[1]+2)  
+	erodeImg [1,1] = extrem_map 
+	dilateImg = REPLICATE(MIN(extrem_map), dims[0]+2, dims[1]+2)  
+	dilateImg [1,1] = extrem_map
+	erodeImg = ERODE(erodeImg, strucElem, /GRAY)  
+	result = DILATE(dilateImg, strucElem, /GRAY) 
+	stop
 	for i=0, xsize-1 do begin
-		slice = smooth(result[i, *], 10)
+		slice = smooth(result[i, 100:ysize-1], 10) - 1.0
 		result1=slice[0:n_elements(slice)-2]*slice[1:n_elements(slice)-1]
-		cross_over = (where(result1 lt 0.0))[0]
+		
+		cross_over = (where(slice le 0.9 ))[0]
 		
 		if i eq 0 then begin
 			xpos = i
@@ -134,11 +156,15 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 	date = time2file(date_str, /date)
 	car_rot_str = string(hdr.car_rot, format='(I4)')
 	restore, folder + date + '_event_info_structure.sav', /verb
+	;if event_info.flare_start_t eq 'YYYY-MM-DDTHH:MMM:SS UT' then $
+	;	event_info.flare_start_t = date_str+'T12:00:00 UT'
+
 	flare_time = anytim((STRSPLIT(event_info.flare_start_t, ' ', /EXTRACT))[0], /utim)
 	flare_date = time2file(flare_time, /date)
 	degs = [-90, -60, -40, -20, 0, 20, 40, 60, 90]
 	degs_sin = sin(degs*!dtor)
 	degs_label = string(degs, format='(I3)') 
+	
 	
 	if keyword_set(carrington) then begin
 		if keyword_set(postscript) then begin
@@ -191,7 +217,7 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 			device, /close
 		endif
 	endif	
-
+;stop
 	;----------------------------------------------------;
 	;	  		Now convert to Stonyhurst coords.
 	;----------------------------------------------------;
@@ -289,7 +315,7 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 		for i=0, n_elements(stny_lons[0, *])-1 do begin
 			plots, stny_lons[0,i], sinlat[0,i], color=colors[i], /data, psym=3, symsize=1.5
 		endfor	
-STOP
+
 		;----------------------------------------------------;
 		;	  	    Plot heliospheric current sheet. 
 		;           Not the most efficient way, but 

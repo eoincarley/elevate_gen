@@ -13,6 +13,8 @@ pro mag_syn_map_process, date
 	if response eq 'n' then begin
 		print, 'Making directory ~/ELEVATE/data/'+date+'/SDO/HMI/'
 		spawn, 'mkdir -p ~/ELEVATE/data/'+date+'/SDO/HMI/
+		cd, '~/ELEVATE/data/'+date+'/SDO/HMI/'
+		spawn, 'open .'
 		print, 'Go to the following URL to download the data: '
 		print, 'http://jsoc.stanford.edu/ajax/exportdata.html?ds%3Dhmi.Synoptic_Mr_720s%5B'+crn_string+'%5D%26limit%3Dnone'
 	endif 
