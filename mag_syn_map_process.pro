@@ -31,9 +31,9 @@ pro mag_syn_map_process, date
 
 		;  starting points to be on a regular grid covering the full disk, with a
 		;  starting radius of r=1.5 Rsun
-		necliptic=120 ; M.DeRosa default
+		necliptic=120	; M.DeRosa default
 		pfss_field_start_coord, 1, necliptic,radstart=2.5
-		spacing=2.5    ; M.Derosa default
+		spacing=2.5		; M.Derosa default
 		pfss_field_start_coord, 7, spacing, radstart=2.5, /add
 		;pfss_field_start_coord,15,spacing,radstart=rix(1),/add
 		pfss_trace_field

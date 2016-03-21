@@ -39,65 +39,58 @@ pro calc_helio_curr_sheet, extrem_map, lon, ypix, colors, $
 
 	; This involves a basic filling of all space by positive and negative field, then searching
 	; for space of zero field in between.
-
+	print, '--------------------------'
+	print, 'Finding position of heliospheric current sheet.'
 	extrem_map[*] = 0
 	xsize = (size(extrem_map))[1]
 	ysize = (size(extrem_map))[2]
+	box_size = 20
 	for i=120, n_elements(lon[0, *])-1 do begin
-		if colors[i] eq 3 then begin
-			extrem_map[ lon[*, i], ypix[*, i] ] = -1
-			extrem_map[ lon[*, i]+4<xsize, ypix[*, i] ] = -1
-			extrem_map[ lon[*, i]-4>0, ypix[*, i] ] = -1
-			extrem_map[ lon[*, i]+8<xsize, ypix[*, i] ] = -1
-			extrem_map[ lon[*, i]-8>0, ypix[*, i] ] = -1
-
-			extrem_map[ lon[*, i], ypix[*, i]+4<ysize ] = -1
-			extrem_map[ lon[*, i], ypix[*, i]-4<0 ] = -1
-			extrem_map[ lon[*, i], ypix[*, i]+10<ysize ] = -1
-			extrem_map[ lon[*, i], ypix[*, i]-10<0 ] = -1
-		endif
-		if colors[i] eq 4 then begin
-			extrem_map[ lon[*, i], ypix[*, i] ] = 1
-			extrem_map[ lon[*, i]+4<xsize, ypix[*, i] ] = 1
-			extrem_map[ lon[*, i]-4>0, ypix[*, i] ] = 1
-			extrem_map[ lon[*, i]+8<xsize, ypix[*, i] ] = 1
-			extrem_map[ lon[*, i]-8>0, ypix[*, i] ] = 1
-
-			extrem_map[ lon[*, i], ypix[*, i]+4<ysize ] = 1
-			extrem_map[ lon[*, i], ypix[*, i]-4<0 ] = 1
-			extrem_map[ lon[*, i], ypix[*, i]+10<ysize ] = 1
-			extrem_map[ lon[*, i], ypix[*, i]-10<0 ] = 1
-		endif
+		;for j=0, n_elements(lon[*, i])-1 do begin
+			;ind0x = (lon[j, i]-box_size>0<(xsize-1))
+			;ind1x = (lon[j, i]+box_size>0<(xsize-1))
+			
+			;ind0y = (ypix[j, i]-box_size>0<(ysize-1))
+			;ind1y = (ypix[j, i]+box_size>0<(ysize-1))
+			
+			if colors[i] eq 3 then begin
+				extrem_map[ lon[*, i]>0<(xsize-1), ypix[*, i]>0<(ysize-1) ] = 1
+			endif
+			if colors[i] eq 4 then begin
+				extrem_map[ lon[*, i]>0<(xsize-1), ypix[*, i]>0<(ysize-1) ] = 1
+			endif
+		;endfor
+		progress_percent, i, 120, n_elements(lon[0, *])-1
 	endfor
-	;extrem_map = smooth(extrem_map, 10, /edge_mirror)
-	
-	extrem_map = extrem_map+1
-	dims = SIZE(extrem_map, /DIMENSION)  
-	radius=10
-	strucElem = SHIFT(DIST(2*radius+1), radius, radius) LE radius  
-	erodeImg = REPLICATE(MAX(extrem_map), dims[0]+2, dims[1]+2)  
-	erodeImg [1,1] = extrem_map 
-	dilateImg = REPLICATE(MIN(extrem_map), dims[0]+2, dims[1]+2)  
-	dilateImg [1,1] = extrem_map
-	erodeImg = ERODE(erodeImg, strucElem, /GRAY)  
-	result = DILATE(dilateImg, strucElem, /GRAY) 
-	stop
-	for i=0, xsize-1 do begin
-		slice = smooth(result[i, 100:ysize-1], 10) - 1.0
-		result1=slice[0:n_elements(slice)-2]*slice[1:n_elements(slice)-1]
-		
-		cross_over = (where(slice le 0.9 ))[0]
-		
-		if i eq 0 then begin
-			xpos = i
-			ypos = cross_over
-		endif else begin
-			xpos = [xpos, i]
-			ypos = [ypos, cross_over]
-		endelse		
+ 
+	result = filter_image(extrem_map, fwhm=25)
+	;loadct, 0
+	;plot_image, result	
+
+	min_pos = where(result lt 0.018); min(result))
+	xy_pos = array_indices(result, min_pos)	
+	xpos = xy_pos[0, *]
+	ypos = xy_pos[1, *]
+	set_line_color
+
+	ypos = ypos[sort(xpos)]
+	xpos = xpos[sort(xpos)]
+	;set_line_color
+	;plots, xpos, ypos, psym=3, color=3
+
+	indeces = findgen(n_elements(xpos)/20)*20
+	xpos = xpos[indeces]
+	ypos = ypos[indeces]
+
+	for i=1, n_elements(ypos)-1 do begin
+		ydis = abs(ypos[i] - ypos[i-1])
+		if ydis gt 200.0 then ypos[i] = ypos[i-1]
 	endfor	
 
-	ypos = smooth(ypos, 150, /edge_mirror)		
+	ypos = smooth(ypos, 10, /edge_mirror)  
+	;set_line_color
+	;plots, xpos, ypos, psym=4, color=3
+
 	xsize = (size(extrem_map))[1]
 	ysize = (size(extrem_map))[2]
 	index_range = dindgen(xsize)
@@ -144,7 +137,7 @@ END
 pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 
 	; Example: mag_synoptic_map_plot, 2010-08-14'
-	; 'Carrington' also plots a map in Carrington longitude. Otherwise it is in HEE coord system.
+	; 'Carrington' also plots a map in Carrington longitude. Otherwise it is in HEE (Stonyhurst) coord system.
 	; Used by mag_syn_map_process.pro
 
 	;------------Read the synoptic map-------------;
@@ -156,8 +149,8 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 	date = time2file(date_str, /date)
 	car_rot_str = string(hdr.car_rot, format='(I4)')
 	restore, folder + date + '_event_info_structure.sav', /verb
-	;if event_info.flare_start_t eq 'YYYY-MM-DDTHH:MMM:SS UT' then $
-	;	event_info.flare_start_t = date_str+'T12:00:00 UT'
+	if event_info.flare_start_t eq 'YYYY-MM-DDTHH:MMM:SS UT' then $
+		event_info.flare_start_t = date_str+'T12:00:00 UT'
 
 	flare_time = anytim((STRSPLIT(event_info.flare_start_t, ' ', /EXTRACT))[0], /utim)
 	flare_date = time2file(flare_time, /date)
@@ -333,7 +326,6 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 		colors[where(open eq 1)] = 4
 		colors[where(open eq -1)] = 3
 
-		lon = (lon - merid_car_lon[0] - one_day_rot)*10.0		; For use on synoptic map.
 		sinlat = sin(lat*!dtor)									; Sine of the latitude.
 		ypix = lat
 
@@ -347,8 +339,13 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 			ypix_line = interpol(ypixels, sinlat_points, sinlat[*, i])
 			ypix[*, i] = ypix_line
 		endfor
-		
-		lon[where(lon lt 0.0)] = (lon[where(lon lt 0.0)]) + 3600.0
+
+
+		lon[where(lon lt 0.0)] = (lon[where(lon lt 0.0)]) + 360.0
+		lon[where(lon gt 360.0)] = (lon[where(lon gt 360.0)]) - 360.0 
+		lon = lon - merid_car_lon[0] - one_day_rot
+		lon[where(lon lt 0.0)] = (lon[where(lon lt 0.0)]) + 360.0 
+		lon = lon*10.
 		calc_helio_curr_sheet, data_stny, lon, ypix, colors, $
 				lon_points, lat_points		
 
@@ -362,8 +359,8 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
    			ytickformat='(A1)', $
    			yticklen=-0.0001
 
-		plots,	lon_points, lat_points, color=5, /data, linestyle=0, thick=3
-
+		plots,lon_points, lat_points, color=5, /data, linestyle=0, thick=3
+	
 		;----------------------------------------------------;
 		;	  			  Plot coronal holes
 		;----------------------------------------------------;
