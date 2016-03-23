@@ -1,12 +1,12 @@
 pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, num_rows, flare_class, active_region, location, $
-                      assoc_wave_time, p_intensity, output_flare_data, cme_list = cme_list
+                      assoc_wave_time, p_intensity, output_flare_data, cme_list=cme_list
   
     template = rd_tfile('~/ELEVATE/website/row_template_v2.html') 
     template = transpose(template)
 
     ; Edit event_num
     irow = where(strtrim(template,1) eq "<!--Row-->")
-    template[irow+1] = string(row_num, format='(I03)')
+    template[irow+1] = '<a name="'+string(row_num, format='(I03)')+'">'+string(row_num, format='(I03)')+'</a>'
     print,'Row number: '+string(row_num)
 
     ; Edit time row
@@ -28,7 +28,6 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
 
     event_folder = '/Users/eoincarley/ELEVATE/data/'+anytim(em_start, /cc, /date)+'/'
     date_string = time2file(em_start, /date_only)
-
     
 
     ;---------------------------------------------------;
@@ -97,12 +96,12 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
 
         endif
 
-        event_info_to_text, '~/ELEVATE/data/'+anytim(em_start, /cc, /date), date_str, 'proton_max_i', string(pinten, format='(E8.2)') + ' (1/cm2/sr/s/MeV)'
+        if em_start gt anytim('2010-08-14T00:00:00', /utim) then event_info_to_text, '~/ELEVATE/data/'+anytim(em_start, /cc, /date), date_str, 'proton_max_i', string(pinten, format='(E8.2)') + ' (1/cm2/sr/s/MeV)'
     endif
 
 
-    ;-----------------------------------------------;
-    ;         Check for candidate wave
+    ;---------------------------------------------------;
+    ;         Check for candidate EUV wave
     ;   Data from http://aia.lmsal.com/AIA_Waves/
     ;   Define a two hour window around em_start time
     elevate_html_wave, row_num, tstart, em_start, wave_times, wave_times_html, flare_class, active_region, location, template, $
@@ -116,7 +115,21 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
                     cme_list
 
     ;---------------------------------------------------;
-    ;---------------- Edit Results -------------------;
+    ;--------- Edit HMI Synoptic map links -------------;
+    ;---------------------------------------------------;         
+    if em_start gt anytim('2010-08-14T00:00:00', /utim) then begin         
+        irow = where(strtrim(template,1) eq "<!--DenMaps-->")  
+        hmi_png_link = anytim(em_start, /cc, /date)+'/SDO/HMI_synoptic_map_'+time2file(em_start, /date)+'_hee.png' 
+
+        ind_date = stregex(template[irow+1], 'maths_server_mirror/', length=len)   
+        template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + hmi_png_link + '")>HMI Synoptic<span>'
+    
+        ind_date = stregex(template[irow+2], 'maths_server_mirror/', length=len)   
+        template[irow+2] = strmid(template[irow+2], 0, ind_date+len) + hmi_png_link + '" alt="image" height="300" /></span></a><br>'
+    endif   
+
+    ;---------------------------------------------------;
+    ;---------------- Edit Results ---------------------;
     ;---------------------------------------------------;    
     if em_start gt anytim('2010-08-14T00:00:00', /utim) then begin         
         irow = where(strtrim(template,1) eq "<!--Results-->")  
@@ -125,7 +138,7 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
 
         ind_date = stregex(template[irow+1], 'maths_server_mirror/', length=len)   
         template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + local_url  + '")>Event Info</a><br>'
-    endif
+    endif    
 
     if row_num mod 2 eq 0 then template[0] = '<tr bgcolor=#B0B0B0 >' else template[0] = '<tr bgcolor=#D0D0D0 >'
     ;if euv_wave eq 'yes' then template[0] = '<tr bgcolor=#333366 >'
@@ -136,7 +149,6 @@ pro write_row, tstart, em_start, row_num, folder, wave_times, wave_times_html, n
    printf, 100, template
    close, 100
 
-   wait, 0.5
 
 END
 
@@ -155,9 +167,9 @@ pro elevate_html_row, fname, folder ;, outname
     ; Procedure to produce html rows for the ELEVATE catalogue.
     ; Input is the text file of times from SEPserver catalogues.
     ; EXAMPLE: elevate_html_row, 'soho_onset.txt', 'soho-erne'
+    ; Must be in ~/ELEVATE/data/SEPserver
 
     template = rd_tfile('~/ELEVATE/website/row_template_v2.html') 
-    stop
 
     ;readcol, fname, obs_tstart, obs_tend, a, format='A,A,D', delimiter=','
     readcol, fname, obs_tstart, p_intensity, format='A, A, A'
@@ -173,7 +185,7 @@ pro elevate_html_row, fname, folder ;, outname
     num_rows = n_elements(obs_tstart)
     save_index = 0.0
     php_incl = strarr(n_elements(tstart))
-    FOR i = n_elements(tstart)-1, 0, -1 DO BEGIN  ;reverse loop to have latest events at the top
+    FOR i = n_elements(tstart)-1, 0, -1 DO BEGIN  ;reverse loop to have latest events at the top of the table
 
         write_row, tstart[i], em_start[i], row_num, folder, wave_times, wave_times_html, num_rows, flare_class, active_region, location, $
               assoc_wave_times, p_intensity, output_flare_data, cme_list = cme_list

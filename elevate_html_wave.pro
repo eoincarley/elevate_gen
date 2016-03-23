@@ -51,8 +51,8 @@ pro elevate_html_wave, row_num, tstart, em_start, wave_times, wave_times_html, f
 
     ; Now provide local link to three colour AIA movies.
     if anytim(tstart, /utim) gt anytim('2010-08-14T00:00:00', /utim) then begin
-        date_str1 = anytim(tstart, /cc, /date_only)
-        date_str2 = time2file(tstart, /date_only)
+        date_str1 = anytim(em_start, /cc, /date_only)
+        date_str2 = time2file(em_start, /date_only)
         three_col_mov = 'AIA_' +date_str2+'_3col_ratio_cool.mp4'
         irow = where( strtrim(template, 1) eq "<!--EUV Wave Local-->" )
         ind_date = stregex(template[irow+1], 'maths_server_mirror/', length=len)   

@@ -14,11 +14,15 @@ pro setup_ps, name
 
 end
 
+;-----------------------------------------------------------------;
+;					Coronal hole positions.
+;-----------------------------------------------------------------;
+
 pro get_chole_pos, openfield, xsize, ysize, $		; input
 		lon_points, sinlat_points, $				; output
 		positive=positive, negative=negative		; keywords
 	
-	if keyword_set(positive) then pos = where(openfield gt 0.03) else pos = where(openfield lt -0.03)
+	if keyword_set(positive) then pos = where(openfield gt 0.01) else pos = where(openfield lt -0.01)
 
 	pos = array_indices(openfield, pos)
 	index_x = pos[0, *]
@@ -34,62 +38,53 @@ pro get_chole_pos, openfield, xsize, ysize, $		; input
 
 END
 
-pro calc_helio_curr_sheet, extrem_map, lon, ypix, colors, $
+;-----------------------------------------------------------------;
+;				Heliospheric current sheet finder.
+;-----------------------------------------------------------------;
+
+pro calc_helio_curr_sheet, extrem_map, lon, ypix, rad, colors, $
 		lon_points,	lat_points
 
-	; This involves a basic filling of all space by positive and negative field, then searching
-	; for space of zero field in between.
+	; The heliospheric current sheet field lines will generally reach greater than 2.4 solar radii in the pfss.
+	; This point is found in this alogorithm and then averaged/smoothed.
 	print, '--------------------------'
 	print, 'Finding position of heliospheric current sheet.'
-	extrem_map[*] = 0
+	extrem_map[*] = 1.
 	xsize = (size(extrem_map))[1]
 	ysize = (size(extrem_map))[2]
-	box_size = 20
-	for i=120, n_elements(lon[0, *])-1 do begin
-		;for j=0, n_elements(lon[*, i])-1 do begin
-			;ind0x = (lon[j, i]-box_size>0<(xsize-1))
-			;ind1x = (lon[j, i]+box_size>0<(xsize-1))
-			
-			;ind0y = (ypix[j, i]-box_size>0<(ysize-1))
-			;ind1y = (ypix[j, i]+box_size>0<(ysize-1))
-			
-			if colors[i] eq 3 then begin
-				extrem_map[ lon[*, i]>0<(xsize-1), ypix[*, i]>0<(ysize-1) ] = 1
-			endif
-			if colors[i] eq 4 then begin
-				extrem_map[ lon[*, i]>0<(xsize-1), ypix[*, i]>0<(ysize-1) ] = 1
-			endif
-		;endfor
-		progress_percent, i, 120, n_elements(lon[0, *])-1
-	endfor
- 
-	result = filter_image(extrem_map, fwhm=25)
-	;loadct, 0
-	;plot_image, result	
 
-	min_pos = where(result lt 0.018); min(result))
+	for i=0, n_elements(rad[0, *])-1 do begin
+		extrem_map[ lon[where(rad[*, i] ge 2.4), i], ypix[where(rad[*, i] ge 2.4), i] ] = 1.
+		extrem_map[ lon[where(rad[*, i] le 2.4), i], ypix[where(rad[*, i] le 2.4), i] ] = 0.
+	endfor	
+
+	result = filter_image(extrem_map, fwhm=20, /ALL_PIXELS)
+	;plot_image, result > 1.0
+
+	min_pos = where(result gt 0.98)
 	xy_pos = array_indices(result, min_pos)	
 	xpos = xy_pos[0, *]
 	ypos = xy_pos[1, *]
 	set_line_color
-
 	ypos = ypos[sort(xpos)]
 	xpos = xpos[sort(xpos)]
-	;set_line_color
-	;plots, xpos, ypos, psym=3, color=3
+	set_line_color
+	
+	for i=10, n_elements(xpos)-1, 20 do begin
+		indices = where(xpos gt xpos[i]-50 and xpos lt xpos[i]+50 $
+					and ypos gt ypos[i]-50 and ypos lt ypos[i]+50)
+	
+		if i eq 10 then xpos_new = mean(xpos[indices]) else xpos_new = [xpos_new,  mean(xpos[indices])]
+		if i eq 10 then ypos_new = mean(ypos[indices]) else ypos_new = [ypos_new,  mean(ypos[indices])]
+		;progress_percent, i, 10, (n_elements(xpos)-1)/20.
+	endfor
+	xpos = xpos_new
+	ypos = ypos_new
 
-	indeces = findgen(n_elements(xpos)/20)*20
-	xpos = xpos[indeces]
-	ypos = ypos[indeces]
-
-	for i=1, n_elements(ypos)-1 do begin
-		ydis = abs(ypos[i] - ypos[i-1])
-		if ydis gt 200.0 then ypos[i] = ypos[i-1]
-	endfor	
-
-	ypos = smooth(ypos, 10, /edge_mirror)  
-	;set_line_color
-	;plots, xpos, ypos, psym=4, color=3
+	;indeces = findgen(n_elements(xpos)/10)*10
+	;xpos = xpos[indeces]
+	;ypos = ypos[indeces]
+	;plots, xpos_new, ypos_new, color=10, psym=3
 
 	xsize = (size(extrem_map))[1]
 	ysize = (size(extrem_map))[2]
@@ -103,6 +98,9 @@ pro calc_helio_curr_sheet, extrem_map, lon, ypix, colors, $
 
 END		
 
+;-----------------------------------------------------------------;
+;					Flare position parser.
+;-----------------------------------------------------------------;
 
 pro flare_pos_string_parse, pos_string, $
 	lat_pos = lat_pos, lon_pos = lon_pos, err=err
@@ -132,9 +130,11 @@ pro flare_pos_string_parse, pos_string, $
 
 END
 
+;-----------------------------------------------------------------;
+;			 ********** Main procedure. ************
+;-----------------------------------------------------------------;
 
-
-pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
+pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington, hs_csheet=hs_csheet
 
 	; Example: mag_synoptic_map_plot, 2010-08-14'
 	; 'Carrington' also plots a map in Carrington longitude. Otherwise it is in HEE (Stonyhurst) coord system.
@@ -144,11 +144,18 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 	date_str = date
 	folder = '~/ELEVATE/data/'+date_str+'/'
 	file = findfile(folder + '/SDO/HMI/hmi.Synoptic_Mr_720s*.fits')
+	
+	if file[0] eq '' then goto, no_file_err
+	
 	mreadfits, file, hdr, data
 	tstop = anytim(STRJOIN(STRSPLIT(hdr.t_stop, '.', /EXTRACT), '-'), /yoh)	;Last time of the recording of the synoptic map
 	date = time2file(date_str, /date)
 	car_rot_str = string(hdr.car_rot, format='(I4)')
-	restore, folder + date + '_event_info_structure.sav', /verb
+	event_info_file = folder + date + '_event_info_structure.sav'
+	
+	if file_test(event_info_file) eq 0 then goto, no_file_err
+	
+	restore, event_info_file, /verb
 	if event_info.flare_start_t eq 'YYYY-MM-DDTHH:MMM:SS UT' then $
 		event_info.flare_start_t = date_str+'T12:00:00 UT'
 
@@ -316,51 +323,51 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 		;			Calculation also done in pixel coords 
 		;			and converted to long and sinlat
 		;----------------------------------------------------;
+		if keyword_set(hs_csheet) then begin
+	   		open_field_file = findfile(folder + 'SDO/HMI/connected_field_*.sav')
+			colors_file = findfile(folder + 'SDO/HMI/open_colour_*.sav')
+			restore, open_field_file[0], /verb
+			restore, colors_file[0], /verb
 
-   		open_field_file = findfile(folder + 'SDO/HMI/connected_field_*.sav')
-		colors_file = findfile(folder + 'SDO/HMI/open_colour_*.sav')
-		restore, open_field_file[0], /verb
-		restore, colors_file[0], /verb
+			colors = intarr(n_elements(open))
+			colors[where(open eq 1)] = 4
+			colors[where(open eq -1)] = 3
 
-		colors = intarr(n_elements(open))
-		colors[where(open eq 1)] = 4
-		colors[where(open eq -1)] = 3
+			sinlat = sin(lat*!dtor)									; Sine of the latitude.
+			ypix = lat
 
-		sinlat = sin(lat*!dtor)									; Sine of the latitude.
-		ypix = lat
+			nBlines = (size(rad))[2]
+			npoints = (size(data))[2]
+			ypixels = dindgen(npoints)
 
-		nBlines = (size(rad))[2]
-		npoints = (size(data))[2]
-		ypixels = dindgen(npoints)
+			sinlat_points = (dindgen(npoints)*(1.0 - (-1.0))/(npoints-1) ) + (-1.0)
 
-		sinlat_points = (dindgen(npoints)*(1.0 - (-1.0))/(npoints-1) ) + (-1.0)
+			for i=0, nBlines-1 do begin
+				ypix_line = interpol(ypixels, sinlat_points, sinlat[*, i])
+				ypix[*, i] = ypix_line
+			endfor	
 
-		for i=0, nBlines-1 do begin
-			ypix_line = interpol(ypixels, sinlat_points, sinlat[*, i])
-			ypix[*, i] = ypix_line
-		endfor
+			lon[where(lon lt 0.0)] = (lon[where(lon lt 0.0)]) + 360.0
+			lon[where(lon gt 360.0)] = (lon[where(lon gt 360.0)]) - 360.0 
+			lon = lon - merid_car_lon[0] - one_day_rot
+			lon[where(lon lt 0.0)] = (lon[where(lon lt 0.0)]) + 360.0 
+			lon = lon*10.
+			calc_helio_curr_sheet, data_stny, lon, ypix, rad, colors, $
+					lon_points, lat_points		
 
+			plot, [-180, 180], [-1, 1], $
+	   			/nodata, $
+	   			/noerase, $
+	   			position = [0.1, 0.1, 0.9, 0.9], $
+	   			/xs, $
+	   			/ys, $
+	   			xtickformat='(A1)', $
+	   			ytickformat='(A1)', $
+	   			yticklen=-0.0001
 
-		lon[where(lon lt 0.0)] = (lon[where(lon lt 0.0)]) + 360.0
-		lon[where(lon gt 360.0)] = (lon[where(lon gt 360.0)]) - 360.0 
-		lon = lon - merid_car_lon[0] - one_day_rot
-		lon[where(lon lt 0.0)] = (lon[where(lon lt 0.0)]) + 360.0 
-		lon = lon*10.
-		calc_helio_curr_sheet, data_stny, lon, ypix, colors, $
-				lon_points, lat_points		
+			plots, lon_points, lat_points, color=5, /data, psym=3, thick=3
+		endif
 
-		plot, [-180, 180], [-1, 1], $
-   			/nodata, $
-   			/noerase, $
-   			position = [0.1, 0.1, 0.9, 0.9], $
-   			/xs, $
-   			/ys, $
-   			xtickformat='(A1)', $
-   			ytickformat='(A1)', $
-   			yticklen=-0.0001
-
-		plots,lon_points, lat_points, color=5, /data, linestyle=0, thick=3
-	
 		;----------------------------------------------------;
 		;	  			  Plot coronal holes
 		;----------------------------------------------------;
@@ -394,7 +401,7 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 
 		radius = 1.5e11			; 1AU in meters
 		ang_vel = 2.8e-6		; Angular velocity of the solar equator
-		v_solwind = 3.8e5		; meters per second
+		v_solwind = get_solar_wind_speed(anytim(flare_time, /cc, /trun))*1e3		; meters per second
 
 		theta = radius*ang_vel/v_solwind
 		theta = theta*!radeg
@@ -447,7 +454,8 @@ pro mag_synoptic_map_plot, date, postscript=postscript, carrington=carrington
 
 	cd, folder + 'SDO/HMI/
 	spawn, 'convert -density 70 HMI_synoptic_map_'+flare_date+'_hee.eps -flatten HMI_synoptic_map_'+flare_date+'_hee.png
-		;spawn, 'cp HMI_synoptic_map_'+flare_date+'_heeq.png ~/ELEVATE/website/maths_server_mirror/'+date_str+'/SDO/'
+	spawn, 'cp HMI_synoptic_map_'+flare_date+'_hee.png ~/ELEVATE/website/maths_server_mirror/'+date_str+'/SDO/'
 	
+	no_file_err: print, 'Error: no HMI file found.'
 
 END
