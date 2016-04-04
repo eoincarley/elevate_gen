@@ -1,7 +1,7 @@
-pro elevate_html_flares, row_num, em_start, tstart, template,  $
+pro elevate_html_flares, row_num, tstart, em_start, template,  $
 			output_flare_data
 
-	; Prodecure used by elevate_html_row to search for closest flare to em_start
+	; Prodecure used by elevate_write_row to search for closest flare to em_start
 
     flares = hsi_read_flarelist()
     start_times = flares.start_time
@@ -23,7 +23,7 @@ pro elevate_html_flares, row_num, em_start, tstart, template,  $
         gev_times = anytim(file2time(gev_names), /utim)
         gev_flare_index = closest(gev_times, em_start)
         gev_flare_time = gev_times[gev_flare_index]
-        if abs(gev_flare_time - em_start) gt 60.0*60.0*2.0  or (tstart - gev_flare_time) lt 0.0 then begin
+        if abs(gev_flare_time - em_start) gt 60.0*60.0*2.0 or (tstart - gev_flare_time) lt 0.0 then begin
             gev_name = ''
             goes_class = ''
             gev_location = ''

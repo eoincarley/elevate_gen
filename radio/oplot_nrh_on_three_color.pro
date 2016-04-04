@@ -10,7 +10,7 @@ pro oplot_nrh_on_three_color, tstart
 							;[445, 432, 408, 327, 298, 270, 228, 173, 150]
 	colors = reverse([2,3,4,5,6,7,8,9,10])
 	;colors = [6, 7, 10]
-	inds = [0,1,2]
+	inds = [0,1,2,3]
 	for j=0, n_elements(inds)-1 do begin
 		;tstart =  anytim('2014-04-18T13:09:35', /utim); anytim(aia_hdr.date_obs, /utim) ;anytim('2014-04-18T12:35:11', /utim)
 		t0 = anytim(tstart, /yoh, /trun, /time_only)
@@ -24,20 +24,19 @@ pro oplot_nrh_on_three_color, tstart
 		index2map, nrh_hdr, nrh_data, $
 				 nrh_map  
 
+		freq_tag = string(nrh_hdr.freq, format='(I3)')		 
 		nrh_data = smooth(nrh_data, 5)
 		nrh_data = alog10(nrh_data)
 		nrh_map.data = nrh_data	
+		data_roi = nrh_data[64:110, 30:80] 	; For determinging source max for 2014-04-18 event
 
-		max_val = max( (nrh_data) ,/nan) 							   
+		max_val = max( (data_roi) ,/nan) 							   
 		nlevels=5.0   
-		top_percent = 0.99
+		top_percent = 0.99	; 0.7 if linear, 0.99 if log
 		levels = (dindgen(nlevels)*(max_val - max_val*top_percent)/(nlevels-1.0)) $
 					+ max_val*top_percent
+		
 
-		;levels = (dindgen(nlevels)*(9.0 - 8.5)/(nlevels-1.0)) $
-	;				+ 8.5		
-
-				
 		set_line_color
 		plot_map, nrh_map, $
 			/overlay, $
@@ -70,7 +69,6 @@ pro oplot_nrh_on_three_color, tstart
 			color=colors[j]					 
 
 
-		freq_tag = string(nrh_hdr.freq, format='(I03)')
 		print, 'Brightness temperature max at '+freq_tag+'  MHz: '+string(levels)
 		print, 'Frequency: '+freq_tag+' MHz '+'. Color: '+string(j+2)
 		print, '--------'

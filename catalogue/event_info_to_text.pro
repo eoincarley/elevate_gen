@@ -22,6 +22,7 @@ pro event_info_to_text, event_folder, date_string, tag, tag_value
 							  'Radio Flux units: Jansky', $
 							  'Particle intensity units: 1/(cm2/sr/s/MeV)', $
 							  'Length units: AU']
+							  
 	if file_exist eq 0 then begin
 		event_info = {name:'event_info', $
 					  event_date:date, $

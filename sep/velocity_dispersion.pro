@@ -188,9 +188,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 ;       
 ; PURPOSE:
 ;    Use velocity dispersion analysis of proton and electron data to 
-;	 figure out particle release time. Start time of in-situ particle
-;	 detection is found using mean in time window +3 or 4 standard 
-;	 deviations.
+;	 figure out particle release time. 
 ;
 ; CALLING SEQUENCE:
 ;    velocity_dispersion, date_folder
@@ -272,8 +270,8 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		endelse	
 
 		chan_inds = ((indgen(19)*(22 - 3)/18 ) + 3)*2
-		start_energy = (param_struct.energy_range)[0] ;'15.4'
-		end_energy = (param_struct.energy_range)[1] ;'57.4'
+		start_energy = '5.72';(param_struct.energy_range)[0] ;'15.4'	; energy ranges may be chosen here.
+		end_energy = '72.0';(param_struct.energy_range)[1] ;'57.4'
 		particle_data = erne_data
 		particle_date = erne_date
 		chan_start = (chan_inds[where(erne_energies eq start_energy)])[0] + count_on
@@ -287,9 +285,8 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		average_window = param_struct.average_window ; 420.0
 		detection_time_err = 10.0 	; minutes
 
-		;param_struct = {name:instrument, start_date:particle_date[0], energy_range:[start_energy, end_energy], smooth_param:smooth_param, average_window:average_window}
-		;save, param_struct, filename=soho_folder+'params_for_vda.sav', description = 'Paramaeters used in the VDA for this event'
-
+		param_struct = {name:instrument, start_date:particle_date[0], energy_range:[start_energy, end_energy], smooth_param:smooth_param, average_window:average_window}
+		save, param_struct, filename=soho_folder+'params_for_vda.sav', description = 'Paramaeters used in the VDA for this event'
 	endif
 
 
@@ -371,7 +368,6 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 			junk = execute(plot_sep)
 		
 			xyouts, date[nels-1] +60.0*2.0, ints[nels-1], chan_energies[chan_name] + ' MeV', /data
-			chan_name = chan_name + 1.0
 
 			;----------------------------------------------------------;
 			;		     Choose detection method here 		  		   ;
@@ -402,7 +398,10 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 				energy = [energy, float(chan_energies[chan_name])]
 			endif	
 
-		endif
+		endif else begin
+			print, 'No valid data in channel '+chan_energies[chan_name] + ' MeV'
+		endelse	
+		chan_name = chan_name + 1.0
 	endfor	
 
 	;----------------------------------------------------------;
@@ -457,7 +456,9 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	par_lim(0).limits(0) = 0.00578	;Constrians travel dist to be greater than 1.0 AU
 
 	par_lim(0).limited(1) = 1 		;Activate upper boundary
-	par_lim(0).limits(1) = 0.0156	;Constrians travel dist to be less than 3.0 AU
+	par_lim(0).limits(1) = 0.0202	;Constrians travel dist to be less than 3.0 AU
+	; Slope of the fit m = (8.33*60.0*s)/(nos) 	; where s is in astronomical units. and nos is number of seconds in a day.
+	; Divide by nos because my fits are expressed in fractions of a day. So with 3.0 AU, m is 0.0174
 
 	p = mpfitexpr(fit, 1.0/[c_fraction], [day_fraction], $
 					yerr, $

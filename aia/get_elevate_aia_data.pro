@@ -2,7 +2,7 @@ pro get_elevate_aia_data, assoc_wave_times
 	
 	use_network
 
-	lambda = ['171', '193', '211']	; Angstroms
+	lambda = ['171', '193', '211']			; Angstroms
 	restore, assoc_wave_times, /verb		; Wave times in /utim
 	;start_file = 0
 

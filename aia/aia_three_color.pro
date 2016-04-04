@@ -34,19 +34,26 @@ END
 
 pro stamp_date, i_a, i_b, i_c
    
-   set_line_color
-   xpos_aia_lab = 0.15
-   ypos_aia_lab = 0.78
-   !p.charsize = 1.8
+    !p.charsize = 2.5
+    set_line_color
+    xpos_aia_lab = 0.15
+    ypos_aia_lab = 0.765;0.155;
 
-   xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
-   xyouts, xpos_aia_lab, ypos_aia_lab+0.05, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
-   
-   xyouts, xpos_aia_lab, ypos_aia_lab+0.025, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
-   xyouts, xpos_aia_lab, ypos_aia_lab+0.025, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
-   
-   xyouts, xpos_aia_lab, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0, charthick=4
-   xyouts, xpos_aia_lab, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
+
+    device, /medium     ; Done three times here to create a black background to the letters. Unfortunately charthick does not work with postscript fonts.
+    xyouts, xpos_aia_lab-0.002, ypos_aia_lab+0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0
+    xyouts, xpos_aia_lab, ypos_aia_lab+0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0
+    xyouts, xpos_aia_lab-0.001, ypos_aia_lab+0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3.0
+
+    xyouts, xpos_aia_lab-0.002, ypos_aia_lab+0.03, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0;, charthick=4
+    xyouts, xpos_aia_lab, ypos_aia_lab+0.03, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0;, charthick=4
+    xyouts, xpos_aia_lab-0.001, ypos_aia_lab+0.03, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
+
+    xyouts, xpos_aia_lab-0.002, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0;, charthick=4
+    xyouts, xpos_aia_lab, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0;, charthick=4
+    xyouts, xpos_aia_lab-0.001, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
+
+
 END
 
 ;--------------------------------------------------------------------;
@@ -98,8 +105,8 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         read_sdo, fls_a[0], i_a, /nodata, only_tags='cdelt1,cdelt2,naxis1,naxis2', /mixed_comp, /noshell   
         ;FOV = [20.0, 20.0]
         ;CENTER = [800.0, -800.0]
-        FOV = [10, 10]
-        CENTER = [600.0, -220] ;[520.0, -220];
+        FOV = [27.15, 27.15];   [10, 10]  ;[16.0, 16.0]  ;[10, 10]    ;[27.15, 27.15];
+        CENTER = [500, -350];[600.0, -220] ;[500.0, -230]  ;[600.0, -220] ; [500, -350];
         
         arcs_per_pixx = i_a.cdelt1/downsize
         arcs_per_pixy = i_a.cdelt2/downsize
@@ -288,7 +295,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     ;        *********************************
     ;-------------------------------------------------;
 
-    first_img_index = closest(min_tim, anytim('2014-04-18T12:55:55'))
+    first_img_index = closest(min_tim, anytim('2014-04-18T12:59:37'))
     last_img_index = closest(min_tim, anytim('2014-04-18T13:12:00'))
 
     lwr_lim = first_img_index     ; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
@@ -347,7 +354,6 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             aia_process_image, fls_211[i], fls_211[i-5], i_a, i_a_pre, iscaled_a, im_type, imsize = array_size
             aia_process_image, fls_193[i], fls_193[i-5], i_b, i_b_pre, iscaled_b, im_type, imsize = array_size
             aia_process_image, fls_171[i], fls_171[i-5], i_c, i_c_pre, iscaled_c, im_type, imsize = array_size
-        	
         ENDELSE
      
         ; Check that the images are closely spaced in time
@@ -370,7 +376,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         loadct, 0, /silent
 
         if keyword_set(postscript) then $
-            setup_ps, '~/source_merge1.eps', x_size+border, y_size+border 			;+string(img_num-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
+            setup_ps, '~/euv_front.eps', x_size+border, y_size+border 			;+string(img_num-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
 
             plot_image, img, true=3, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $
@@ -387,7 +393,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             read_sdo, fls_211[i], i_0, d_0, outsize=4096
             index2map, i_0, d_0, map0
             data = map0.data 
-            data = data < 50.0   ; Just to make sure the map contours of the dummy map don't sow up.
+            data = data < 50.0   ; Just to make sure the map contours of the dummy map don't show up.
             map0.data = data
             levels = [100,100,100]
 
@@ -399,7 +405,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
                 ; /noxticks, $
                 ; /noyticks, $
                 ; /noaxes, $
-                thick=2.5, $
+                ;thick=1.5, $
                 color=0, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $ 
                 /normal, $
@@ -410,25 +416,19 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
                 fov = FOV, $
                 center = CENTER, $
                 charsize=2.5       
+           
 
-            plot_helio, i_0.date_obs, $
-                 /over, $
-                 gstyle=0, $
-                 gthick=3.5, $  
-                 gcolor=1, $
-                 grid_spacing=15.0 
-
-            stamp_date, i_a, i_b, i_c
-
-            oplot_nrh_on_three_color, i_c.date_obs      ;For the 2014-April-Event
+            ;oplot_nrh_on_three_color, '2014-04-18T12:43:47'    ;   i_c.date_obs      ;For the 2014-April-Event
+            ;oplot_nrh_on_three_color, '2014-04-18T12:35:11'    ;   For initial type III
             ;oplot_nrh_on_three_color, '2014-04-18T12:53:55'
-            ;oplot_nrh_on_three_color, '2014-04-18T12:55:55'      
+            ;oplot_nrh_on_three_color, '2014-04-18T12:55:59.34'      
+            ;oplot_nrh_on_three_color, '2014-04-18T12:57:58'      
 
             ;point, x, y, /data
             ;save, x, y, filename='~/Data/2014_apr_18/sdo/points_faintloop2.sav' 
             ;dam_orfees_plot_gen, time_marker=anytim(i_c.date_obs, /utim)
-            restore,'~/Data/2014_apr_18/sdo/points_faintloop2.sav' 
-            ;plots, x, y, /data, psym=1, color=5, thick=6, symsize=2.0
+            ;restore,'~/Data/2014_apr_18/sdo/points_faintloop2.sav' 
+            ;plots, x, y, /data, psym=1, color=5, thick=8, symsize=3.0
             ;plots, x, y, /data, psym=1, color=0, thick=1.0, symsize=1.0
 
 			;cursor, x_pos, y_pos, /data 
@@ -439,11 +439,22 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             ;	times = [times, anytim(i_a.date_d$obs, /utim)]
             ;	front_pos = [ front_pos, [[x_pos] , [y_pos]]]
             ;endelse	
+
+
+            plot_helio, i_0.date_obs, $
+                 /over, $
+                 gstyle=0, $
+                 ;gthick=5.1, $  
+                 gcolor=1, $
+                 grid_spacing=15.0 
+
+            stamp_date, i_a, i_b, i_c
            
         if keyword_set(postscript) then begin
             device, /close
             set_plot, 'x'
         endif    
+print, 'TEST'
 STOP  
         cd, folder  ;change back to aia folder
         
