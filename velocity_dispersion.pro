@@ -222,7 +222,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	!p.charsize = 1.5
 	event_folder = '/Users/eoincarley/ELEVATE/data/' +date_folder+ '/'
 	ace_folder = event_folder + 'ACE/'
-	soho_folder = event_folder + 'SOHO/ERNE/'
+	soho_folder = event_folder + '/ERNE/'
 
 	yrange = '[1e-4, 1e4]'		; To be used in case that CUSUM method is chosen and particle counts are used.		 
 
