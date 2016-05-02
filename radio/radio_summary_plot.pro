@@ -30,7 +30,7 @@ pro radio_summary_plot, date, time_range, freq_range, $
     ;
     ;PURPOSE:
    	;  This is an attempt to generalise a radio spectrogram summary plot.
-	; Choose times and frequencies and choose instruments to use.
+	;  Choose times and frequencies and choose instruments to use.
     ;
     ;CALLING SEQUENCE:
     ;      radio_summary_plot, date, [time0, time1], [freq0, freq1]
@@ -51,7 +51,7 @@ pro radio_summary_plot, date, time_range, freq_range, $
     ;-
 
     ; Define named variables
-    folder = '~/Data/elevate_db/'+date+'/radio/'
+    folder = '~/Data/2015_nov_04/radio/'
     time0 = date+'T'+time_range[0]
     time1 = date+'T'+time_range[1]
     time0 = anytim(time0, /utim)
@@ -65,7 +65,7 @@ pro radio_summary_plot, date, time_range, freq_range, $
 	if keyword_set(postscript) then begin 
 		setup_ps, folder+'/radio_summary_'+date+'.eps'
 	endif else begin
-		loadct, 0
+		loadct, 74
 		reverse_ct
 		window, 0, xs=1000, ys=600, retain=2
 		!p.charsize=1.5
@@ -96,13 +96,13 @@ pro radio_summary_plot, date, time_range, freq_range, $
 			time0, time1, freq0, freq1		
 
 	;-------------------------;
-	;	Plot Orfees 
+	;	Plot Orfees and DAM
 	;
-	;if keyword_set(orfees) then orfees_plot, folder+'/learmonth/', $
-	;						time0, time1, freq0, freq1	
+	if keyword_set(orfees) then orfees_plot, folder+'/orfees/', $
+							time0, time1, freq0, freq1	
 
-	;if keyword_set(dam) then dam_plot, folder+'/learmonth/', $
-	;		                time0, time1, freq0, freq1			
+	if keyword_set(dam) then dam_plot, folder+'/dam/', $
+			                time0, time1, freq0, freq1			
 
 	;-------------------------;
 	;	Plot WIND/WAVES
