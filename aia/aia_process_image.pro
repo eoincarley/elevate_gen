@@ -36,10 +36,10 @@ pro aia_process_image, img_name, img_pre_name, hdr, hdr_pre, $
             undefine, img
             undefine, img_pre
             iscaled_img = ( iscaled_img - mean(iscaled_img) ) /stdev(iscaled_img)   
-            iscaled_img = iscaled_img > (-1.0) < 6 
+           ; iscaled_img = iscaled_img > (-1.0) < 6 
 
             ;iscaled_img = alog(iscaled_img>1e-6)
-            ;iscaled_img = iscaled_img > (3) < (7)      ;-20 and 28 good for pre-eruptive rope.
+            iscaled_img = iscaled_img > (-20) < (28)    ;and 28 good for pre-eruptive rope.
             ;hfreq = iscaled_img - smooth(iscaled_img, 10)
             ;iscaled_img = 0.5*iscaled_img + 1.0*hfreq
             ;iscaled_img = rebin(iscaled_img, imsize, imsize)
@@ -50,8 +50,8 @@ pro aia_process_image, img_name, img_pre_name, hdr, hdr_pre, $
             undefine, img
             undefine, img_pre
             iscaled_img = iscaled_img >(0.5) < 1.3 ;    ;0.80, 1.5 for ratio image
-            ;hfreq = iscaled_img - smooth(iscaled_img, 10)
-            iscaled_img = iscaled_img;*0.5 + 0.5*smooth(iscaled_img, 5)
+            ;hfreq = iscaled_img - smooth(iscaled_img, 20)
+            ;iscaled_img = iscaled_img*0.8 + 0.2*hfreq
         endif   
 
  

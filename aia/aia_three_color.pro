@@ -2,7 +2,7 @@ pro setup_ps, name, xsize, ysize
 
     set_plot,'ps'
     !p.font=0
-    !p.charsize=1.8
+    !p.charsize=1.4
     device, filename = name, $
           ;/decomposed, $
           /color, $
@@ -34,13 +34,12 @@ END
 
 pro stamp_date, i_a, i_b, i_c
    
-    !p.charsize = 2.5
     set_line_color
     xpos_aia_lab = 0.15
-    ypos_aia_lab = 0.765;0.155;
+    ypos_aia_lab = 0.78;0.155;
 
 
-    device, /medium     ; Done three times here to create a black background to the letters. Unfortunately charthick does not work with postscript fonts.
+    ;device, /medium     ; Done three times here to create a black background to the letters. Unfortunately charthick does not work with postscript fonts.
     xyouts, xpos_aia_lab-0.002, ypos_aia_lab+0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0
     xyouts, xpos_aia_lab, ypos_aia_lab+0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0
     xyouts, xpos_aia_lab-0.001, ypos_aia_lab+0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3.0
@@ -99,14 +98,14 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
 
     array_size = 4096
     downsize = array_size/4096.
-    shrink = 1.0   ;shrink image size
+    shrink = 1.3   ;shrink image size
     if keyword_set(zoom) then begin
     
         read_sdo, fls_a[0], i_a, /nodata, only_tags='cdelt1,cdelt2,naxis1,naxis2', /mixed_comp, /noshell   
         ;FOV = [20.0, 20.0]
         ;CENTER = [800.0, -800.0]
-        FOV = [27.15, 27.15];   [10, 10]  ;[16.0, 16.0]  ;[10, 10]    ;[27.15, 27.15];
-        CENTER = [500, -350];[600.0, -220] ;[500.0, -230]  ;[600.0, -220] ; [500, -350];
+        FOV = [16.0, 16.0];   [10, 10]  ;[16.0, 16.0]  ;[10, 10]    ;[27.15, 27.15];
+        CENTER = [550, -230];[600.0, -220] ;[500.0, -230]  ;[600.0, -220] ; [500, -350];
         
         arcs_per_pixx = i_a.cdelt1/downsize
         arcs_per_pixy = i_a.cdelt2/downsize
@@ -161,19 +160,18 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
          x_size = (x_range[1]-x_range[0])
          y_size = (y_range[1]-y_range[0])
         endelse        
-        border = 400
+        border = 300
 
     endif else begin
         x_range = [0,  array_size-1]
         y_range = [0,  array_size-1]
         x_size = 1024
         y_size = 1024
-        border = 400
+        border = 300
     endelse
 
     x_size = x_size/shrink
     y_size = y_size/shrink
-
 
     ; Check the images to make sure we're not using AEC-affected images
     min_exp_t_193 = 1.0
@@ -295,8 +293,8 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     ;        *********************************
     ;-------------------------------------------------;
 
-    first_img_index = closest(min_tim, anytim('2014-04-18T12:59:37'))
-    last_img_index = closest(min_tim, anytim('2014-04-18T13:12:00'))
+    first_img_index = closest(min_tim, anytim('2014-04-18T12:30:00'))
+    last_img_index = closest(min_tim, anytim('2014-04-18T13:10:00'))
 
     lwr_lim = first_img_index     ; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
                     ; 190 on cool AIA channels for good CME legs.
@@ -376,15 +374,15 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         loadct, 0, /silent
 
         if keyword_set(postscript) then $
-            setup_ps, '~/euv_front.eps', x_size+border, y_size+border 			;+string(img_num-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
+            setup_ps, '~/Data/2014_apr_18/combos/LT_source_2/image_'+string(img_num-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
 
             plot_image, img, true=3, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $
                 /normal, $
                 xticklen=-0.001, $
                 yticklen=-0.001, $
-                xtickname=[' ',' ',' ',' ',' ',' '], $
-                ytickname=[' ',' ',' ',' ',' ',' ']
+                xtickname=[' ',' ',' ',' ',' ',' ',' '], $
+                ytickname=[' ',' ',' ',' ',' ',' ',' ']
 
             ;---------------------------------------------------------------;
             ; In order to plot a heligraphic grid. Overplot an empty dummy 
@@ -414,10 +412,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
                 xticklen=-0.01, $
                 yticklen=-0.01, $
                 fov = FOV, $
-                center = CENTER, $
-                charsize=2.5       
+                center = CENTER  
            
-
+            oplot_nrh_on_three_color,  i_c.date_obs      ;For the 2014-April-Event
             ;oplot_nrh_on_three_color, '2014-04-18T12:43:47'    ;   i_c.date_obs      ;For the 2014-April-Event
             ;oplot_nrh_on_three_color, '2014-04-18T12:35:11'    ;   For initial type III
             ;oplot_nrh_on_three_color, '2014-04-18T12:53:55'
@@ -454,8 +451,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             device, /close
             set_plot, 'x'
         endif    
-print, 'TEST'
-STOP  
+
         cd, folder  ;change back to aia folder
         
         if keyword_set(xwin) then x2png, folder + '/image_'+string(img_num-lwr_lim+139, format='(I03)' )+'.png'
@@ -479,7 +475,7 @@ STOP
         print,'Currently '+string(loop_time, format='(I04)')+' seconds per 3 color image.'
         print,'-------------------'
 
-      
+;STOP      
         ;if anytim(i_a.date_obs, /utim) gt time_stop then BREAK  ;For the 2014-April-Event
     endfor
     ;front_pos = transpose(front_pos)
@@ -491,6 +487,7 @@ STOP
     if keyword_set(hot) then chans = 'hot' else chans = 'cool'
     movie_type = 'flux_rope_3col_'+type0+'_'+chans ;else movie_type = '3col_ratio' cd, folder
     ;print, folder 
+    ;spawn, '
     ;spawn, 'ffmpeg -y -r 25 -i image_%03d.png -vb 50M AIA_'+date+'_'+movie_type+'.mpg'
 
     ;spawn, 'cp AIA_'+date+'_'+movie_type+'.mpg ~/Dropbox/sdo_movies/'

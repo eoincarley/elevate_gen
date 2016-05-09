@@ -1,4 +1,4 @@
-pro setup_ps, name, xsize, ysize
+pro setup_ps, name;, xsize, ysize
 
     set_plot,'ps'
     !p.font=0
@@ -20,31 +20,31 @@ pro stamp_date_nrh, nrh0, nrh1, nrh2, xpos
    set_line_color
    !p.charsize = 1.2
 
-   xyouts, xpos-0.0001, 0.87, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 1
-   xyouts, xpos+0.0001, 0.87, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 1
-   xyouts, xpos, 0.87, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
+   xyouts, xpos-0.0001, 0.84, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 1
+   xyouts, xpos+0.0001, 0.84, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 1
+   xyouts, xpos, 0.84, 'NRH '+string(nrh0.freq, format='(I03)') +' MHz '+anytim(nrh0.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3
   
-   xyouts, xpos-0.0001, 0.84, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 1
-   xyouts, xpos+0.0001, 0.84, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 1
-   xyouts, xpos, 0.84, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
+   xyouts, xpos-0.0001, 0.81, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 1
+   xyouts, xpos+0.0001, 0.81, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 1
+   xyouts, xpos, 0.81, 'NRH '+string(nrh1.freq, format='(I03)') +' MHz '+anytim(nrh1.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
 
-   xyouts, xpos-0.0001, 0.81, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 1    
-   xyouts, xpos+0.0001, 0.81, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 1
-   xyouts, xpos, 0.81, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
+   xyouts, xpos-0.0001, 0.78, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 1    
+   xyouts, xpos+0.0001, 0.78, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 1
+   xyouts, xpos, 0.78, 'NRH '+string(nrh2.freq, format='(I03)') +' MHz '+anytim(nrh2.date_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
+
 END
 
 pro plot_nrh_tri_color_for_movie, time, freqs, x_size, y_size, $
          hdr_freqs = hdr_freqs
 
-        ; plot_nrh_tri_color, '2014-04-18T12:57:57', [6,7,8], 500, 500     
+        ; plot_nrh_tri_color_for_movie, '2014-04-18T12:57:57', [0,1,1], 512, 512     
 
-        border=200.
-        t0 = anytim(time, /utim) 
+        border=273.                      ; (700./512.)*200. Had to make the border different than the AIA plot. Takes into account window size, image size
+        t0 = anytim(time, /utim) - 2.0   ; -2 to match images in paper.
         t0str = anytim(t0, /yoh, /trun, /time_only) 
 
         cd, '~/Data/2014_apr_18/radio/nrh/clean_wresid/'
         filenames = findfile('*.fts')
-
 
         read_nrh, filenames[freqs[0]], $
         nrh_hdr0, $
@@ -66,9 +66,9 @@ pro plot_nrh_tri_color_for_movie, time, freqs, x_size, y_size, $
         max_value2 = max(nrh_data2)
         max_value = max([nrh_data0, nrh_data1, nrh_data2])
 
-        nrh_data0 = nrh_data0 > max_value*0.3 < max_value*0.7
-        nrh_data1 = nrh_data1 > max_value*0.3 < max_value*0.7
-        nrh_data2 = nrh_data2 > max_value*0.3 < max_value*0.7 
+        nrh_data0 = nrh_data0 > max_value*0.1 < max_value*0.7
+        nrh_data1 = nrh_data1 > max_value*0.1 < max_value*0.7
+        nrh_data2 = nrh_data2 > max_value*0.1 < max_value*0.7 
 
         image_half = (nrh_hdr0.naxis1/2.0)*nrh_hdr0.cdelt1 
         CENTER = [0, 0] 
@@ -87,8 +87,8 @@ pro plot_nrh_tri_color_for_movie, time, freqs, x_size, y_size, $
         print, map_fov
 
         truecolorim_zoom = [[[nrh_data0[xcen-pix_fov:xcen+pix_fov, ycen-pix_fov:ycen+pix_fov]]], $
-                        [[nrh_data1[xcen-pix_fov:xcen+pix_fov, ycen-pix_fov:ycen+pix_fov]]], $
-                        [[nrh_data2[xcen-pix_fov:xcen+pix_fov, ycen-pix_fov:ycen+pix_fov]]]]
+                            [[nrh_data1[xcen-pix_fov:xcen+pix_fov, ycen-pix_fov:ycen+pix_fov]]], $
+                            [[nrh_data2[xcen-pix_fov:xcen+pix_fov, ycen-pix_fov:ycen+pix_fov]]]]
 
         img_origin = [-1.0*x_size/2, -1.0*y_size/2]
 
@@ -98,11 +98,13 @@ pro plot_nrh_tri_color_for_movie, time, freqs, x_size, y_size, $
         hdr_freqs = [nrh_hdr0.freq, nrh_hdr1.freq, nrh_hdr2.freq]
         hdr_freqs = string(hdr_freqs, format='(I03)')
 
-        ;setup_ps, '~/test.eps', x_size+border, y_size+border ;'+string(i - start_index, format='(I03)' )+'.eps', x_size+border, y_size+border
+        ;setup_ps, '~/test.eps';, x_size+border, y_size+border ;'+string(i - start_index, format='(I03)' )+'.eps', x_size+border, y_size+border
         loadct, 0, /silent
-        plot_image, im_zoom, true=3, $
-            position = [x_size+border/4., border/2, 2.0*x_size-border/4, 2.0*y_size-border/2.0]/(2.0*x_size), $
+        xshift = 20.
+        plot_image, img, true=3, $
+            position = [x_size+border/4.-xshift, border/2., 2.0*x_size-border/4.-xshift, 2.0*y_size-border/2.0]/(2.0*x_size), $
             /normal, $
+            /noerase, $
             xticklen=-0.001, $
             yticklen=-0.001, $
             xtickname=[' ',' ',' ',' ',' ',' ',' '], $
@@ -115,7 +117,6 @@ pro plot_nrh_tri_color_for_movie, time, freqs, x_size, y_size, $
         map0.data = data
         levels = [100,100,100]
 
-
         set_line_color
         plot_map, map0, $
             /cont, $
@@ -125,7 +126,7 @@ pro plot_nrh_tri_color_for_movie, time, freqs, x_size, y_size, $
             ; /noaxes, $
             thick=2.5, $
             color=0, $
-            position = [x_size+border/4., border/2, 2.0*x_size-border/4, 2.0*y_size-border/2.0]/(2.0*x_size), $ 
+            position = [x_size+border/4.-xshift, border/2., 2.0*x_size-border/4.-xshift, 2.0*y_size-border/2.]/(2.0*x_size), $ 
             /normal, $
             /noerase, $
             /notitle, $
@@ -141,17 +142,17 @@ pro plot_nrh_tri_color_for_movie, time, freqs, x_size, y_size, $
             gcolor=255, $
             grid_spacing=15.0 
 
-        xpos_labels = (x_size+border/4)/(2.0*x_size)+0.01
+        xpos_labels = (x_size+border/4-xshift)/(2.0*x_size)+0.005
         stamp_date_nrh, nrh_hdr0, nrh_hdr1, nrh_hdr2, xpos_labels
 
         min_tb = string(round(alog10(max_value*0.2)*10.0)/10.0, format='(f3.1)')
         max_tb = string(round(alog10(max_value*0.7)*10.0)/10.0, format='(f3.1)')
-        xyouts, xpos_labels, 0.12, min_tb+' < log!L10!N(T!LB!N [K]) < '+max_tb, /normal, color=1
+        xyouts, xpos_labels, 0.15, min_tb+' < log!L10!N(T!LB!N [K]) < '+max_tb, /normal, color=1
 
         date = time2file(t0, /date_only)
         freq_string = string(nrh_hdr0.freq, format='(I03)') + '_'+ string(nrh_hdr1.freq, format='(I03)') + '_' +string(nrh_hdr2.freq, format='(I03)')
 
-        ;device, /close
-        ;set_plot, 'x'
+       ; device, /close
+       ; set_plot, 'x'
 
 END
