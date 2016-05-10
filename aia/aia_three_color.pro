@@ -61,16 +61,53 @@ END
 ;
 ;--------------------------------------------------------------------;
 
-pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
+pro aia_three_color, date = date, xwin = xwin, $
             zoom=zoom, parallelise=parallelise, winnum=winnum, $
-            hot = hot, postscript=postscript, im_type=im_type
+            hot = hot, postscript=postscript, im_type=im_type, folder=folder
 
+;+++
+;    NAME:
+;    aia_three_color
+;
+;    PROJECT:
+;    ELEVATE Catalogue
+;
+;    PURPOSE:
+;    This code plots an AIA three color image, e.g., three AIA filters in an RGB image.
+;
+;    CALLING SEQUENCE:
+;    aia_three_color, date = '2014-04-01', /xwin, /hot, /zoom, im_type='ratio'
+;    aia_three_color, folder = '~/Data/2014_sep_01/sdo/', $
+;            /xwin, /hot, /zoom, im_type='ratio'
+;
+;    INPUT:
+;    None for the moment, but date='YYYY-MM-DD' will allow data retrieval from the ELEVATE catlogue
+;
+;    KEYWORDS:
+;    date: A string of 'YYYY-MM-DD'. This is to search a folder with such a string 
+;          in the ELEVATE catalogue
+;    xwin: Plot the image in an xwindow. 
+;    winnum: Window number if xwin chosen. Default 0.
+;    postscript: Plots in postscript device. May need to play around a little 
+;                with charsize for this option
+;    zoom: Zooms on a region. User will have to define ROI in the code below.
+;    hot: Will plot the 'hot' AIA channels, 94, 131, 335 Anstroms
+;    im_type: Chose from 'ratio' for running ratio, 'nrgf' for a running ratio with 
+;             a normalising radial gradient filter, or 'total_b' for just total brightness.
+;    folder: specificy a folder in which the data folders '171', '193' and '211' are present.
+;    parallelise: Will process the three AIA images in parallel using IDL bridges. May or may not;
+;                 speed up processing time.
+;
+;
+;    HISTORY:
+;    2015: Written by Eoin Carley
+;    2016-March-23: Cleanup, Eoin Carley.  
+;-
+        
+    !p.charsize = 1.5
     if ~keyword_set(im_type) then im_type = 'total_b' 
     if ~keyword_set(winnum) then winnum = 0        
-   
-    !p.charsize = 1.5
-    folder = '~/Data/elevate_db/'+date+'/SDO/AIA'
-    time_stop = anytim('2014-04-18T13:10:00', /utim)  ;For the 2014-April-Event
+    if keyword_set(folder) then folder = folder else folder = '~/Data/elevate_db/'+date+'/SDO/AIA'
 
     if keyword_set(hot) then begin
        pass_a = '094'
@@ -98,14 +135,14 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
 
     array_size = 4096
     downsize = array_size/4096.
-    shrink = 1.3   ;shrink image size
+    shrink = 2.0   ;shrink image size
     if keyword_set(zoom) then begin
     
         read_sdo, fls_a[0], i_a, /nodata, only_tags='cdelt1,cdelt2,naxis1,naxis2', /mixed_comp, /noshell   
         ;FOV = [20.0, 20.0]
         ;CENTER = [800.0, -800.0]
-        FOV = [16.0, 16.0];   [10, 10]  ;[16.0, 16.0]  ;[10, 10]    ;[27.15, 27.15];
-        CENTER = [550, -230];[600.0, -220] ;[500.0, -230]  ;[600.0, -220] ; [500, -350];
+        FOV = [70., 70.];[16.0, 16.0]    ;   [10, 10]  ;[16.0, 16.0]  ;[10, 10]    ;[27.15, 27.15];
+        CENTER = [0., 0.] ;[550, -230]  ;[600.0, -220] ;[500.0, -230]  ;[600.0, -220] ; [500, -350];
         
         arcs_per_pixx = i_a.cdelt1/downsize
         arcs_per_pixy = i_a.cdelt2/downsize
@@ -160,14 +197,14 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
          x_size = (x_range[1]-x_range[0])
          y_size = (y_range[1]-y_range[0])
         endelse        
-        border = 300
+        border = 200
 
     endif else begin
         x_range = [0,  array_size-1]
         y_range = [0,  array_size-1]
         x_size = 1024
         y_size = 1024
-        border = 300
+        border = 200
     endelse
 
     x_size = x_size/shrink
@@ -293,14 +330,15 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
     ;        *********************************
     ;-------------------------------------------------;
 
-    first_img_index = closest(min_tim, anytim('2014-04-18T12:30:00'))
-    last_img_index = closest(min_tim, anytim('2014-04-18T13:10:00'))
+    first_img_index = closest(min_tim, anytim('2014-09-01T11:02:30'))
+    last_img_index = closest(min_tim, anytim('2014-09-01T11:20:00'))
 
-    lwr_lim = first_img_index     ; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
+                    ; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
                     ; 190 on cool AIA channels for good CME legs.
                     ; 185 for detached EUV wave
-    img_num = lwr_lim
-    for i = lwr_lim, last_img_index do begin    ;n_elements(fls_211)-1 do begin
+
+    img_num = first_img_index
+    for i = first_img_index, last_img_index do begin  
       
         get_utc, start_loop_t, /cc
 
@@ -374,7 +412,7 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         loadct, 0, /silent
 
         if keyword_set(postscript) then $
-            setup_ps, '~/Data/2014_apr_18/combos/LT_source_2/image_'+string(img_num-lwr_lim, format='(I03)' )+'.eps', x_size+border, y_size+border
+            setup_ps, '~/Data/2014_sep_01/combos/image_'+string(img_num-first_img_index, format='(I03)' )+'.eps', x_size+border, y_size+border
 
             plot_image, img, true=3, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $
@@ -414,7 +452,16 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
                 fov = FOV, $
                 center = CENTER  
            
-            oplot_nrh_on_three_color,  i_c.date_obs      ;For the 2014-April-Event
+
+            plot_helio, i_0.date_obs, $
+                 /over, $
+                 gstyle=0, $
+                 ;gthick=5.1, $  
+                 gcolor=1, $
+                 grid_spacing=15.0 
+    
+
+            oplot_nrh_on_three_color,  i_c.date_obs             ;For the 2014-April-Event
             ;oplot_nrh_on_three_color, '2014-04-18T12:43:47'    ;   i_c.date_obs      ;For the 2014-April-Event
             ;oplot_nrh_on_three_color, '2014-04-18T12:35:11'    ;   For initial type III
             ;oplot_nrh_on_three_color, '2014-04-18T12:53:55'
@@ -428,22 +475,14 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
             ;plots, x, y, /data, psym=1, color=5, thick=8, symsize=3.0
             ;plots, x, y, /data, psym=1, color=0, thick=1.0, symsize=1.0
 
-			;cursor, x_pos, y_pos, /data 
-            ;if i eq lwr_lim then begin
+			      ;cursor, x_pos, y_pos, /data 
+            ;if i eq first_img_index then begin
             ;	times = anytim(i_a.date_d$obs, /utim)
             ;	front_pos = [[x_pos] , [y_pos]] 
             ;endif else begin
             ;	times = [times, anytim(i_a.date_d$obs, /utim)]
             ;	front_pos = [ front_pos, [[x_pos] , [y_pos]]]
             ;endelse	
-
-
-            plot_helio, i_0.date_obs, $
-                 /over, $
-                 gstyle=0, $
-                 ;gthick=5.1, $  
-                 gcolor=1, $
-                 grid_spacing=15.0 
 
             stamp_date, i_a, i_b, i_c
            
@@ -454,15 +493,14 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
 
         cd, folder  ;change back to aia folder
         
-        if keyword_set(xwin) then x2png, folder + '/image_'+string(img_num-lwr_lim+139, format='(I03)' )+'.png'
-  
+        if keyword_set(xwin) then x2png, folder + '/image_'+string(img_num-first_img_index, format='(I03)' )+'.png'
         if keyword_set(zbuffer) then begin
             img = tvrd(/true)
-            ;  write_png, 'SDO_3col_plain_'+time2file(i_a.t_obs, /sec)+'.png', img
-            ;  image_loc_name = folder + '/image_'+string(i-lwr_lim, format='(I03)' )+'.png' 
+            image_loc_name = folder + '/image_'+string(i-first_img_index, format='(I03)' )+'.png' 
             cd, '~'
             write_png, image_loc_name , img
         endif
+
         print, img_num
         img_num = img_num + 1
 
@@ -475,9 +513,9 @@ pro aia_three_color, date = date, mssl = mssl, xwin = xwin, $
         print,'Currently '+string(loop_time, format='(I04)')+' seconds per 3 color image.'
         print,'-------------------'
 
-;STOP      
-        ;if anytim(i_a.date_obs, /utim) gt time_stop then BREAK  ;For the 2014-April-Event
+STOP      
     endfor
+
     ;front_pos = transpose(front_pos)
     ;front_pos = {name:'front_xy', times:times, xarcsec:front_pos[0, *], yarcsec:front_pos[1, *]}
     ;save, front_pos, filename= folder+'/euv_front_pos_struct.sav'
