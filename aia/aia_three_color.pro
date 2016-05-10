@@ -55,6 +55,72 @@ pro stamp_date, i_a, i_b, i_c
 
 END
 
+function make_zoom_struct, fov, center, hdr, downsize
+
+    arcs_per_pixx = hdr.cdelt1/downsize
+    arcs_per_pixy = hdr.cdelt2/downsize
+    naxisx = hdr.naxis1*downsize
+    naxisy = hdr.naxis1*downsize
+
+    x0 = fix((center[0]/arcs_per_pixx + (naxisx/2.0)) - (fov[0]*60.0/arcs_per_pixx)/2.0)
+    x1 = fix((center[0]/arcs_per_pixx + (naxisx/2.0)) + (fov[0]*60.0/arcs_per_pixx)/2.0)
+    y0 = fix((center[1]/arcs_per_pixy + (naxisy/2.0)) - (fov[1]*60.0/arcs_per_pixy)/2.0)
+    y1 = fix((center[1]/arcs_per_pixy + (naxisy/2.0)) + (fov[1]*60.0/arcs_per_pixy)/2.0)
+
+    ; The following produces a new array (bigger or smaller, depending on the zoom size) in which
+    ; the original AIA frame is to be inserted. The if statements basically take care of weather or
+    ; not the new arrau is smaller or bigger than the original AIA image. This took fucking ages....
+
+    new_x_size = x1 - x0 + 1
+    new_y_size = y1 - y0 + 1
+    new_array_a = fltarr(new_x_size, new_y_size)
+    new_array_b = fltarr(new_x_size, new_y_size)
+    new_array_c = fltarr(new_x_size, new_y_size)
+
+    if x0 lt 0 then begin
+        x0new=fix(abs(x0))
+        if new_x_size gt naxisx then x1new=abs(x0) + (x1 < (naxisx-1)) $
+            else x1new = new_x_size - 1.
+    endif else begin
+        x0new=0
+        x1new=(x1<(naxisx-1)) - (x0>0)
+    endelse
+
+    if y0 lt 0 then begin
+        y0new=fix(abs(y0))
+        if new_x_size gt naxisx then y1new=abs(y0) + (y1 < (naxisx-1)) $
+            else y1new = new_x_size - 1.
+    endif else begin
+        y0new=0
+        y1new=(y1<(naxisx-1)) - (y0>0)
+    endelse 
+
+    x_range = [x0, x1]  
+    y_range = [y0, y1]    
+
+    if (x_range[1]-x_range[0]) gt 1024 or (y_range[1]-y_range[0]) gt 1024 then begin
+        if (x_range[1]-x_range[0]) ge (y_range[1]-y_range[0]) then begin
+            x_size = 1024
+            y_size = round(1024*(float(y_range[1]-y_range[0])/float(x_range[1]-x_range[0])))
+        endif
+        if (x_range[1]-x_range[0]) lt (y_range[1]-y_range[0]) then begin
+            y_size = 1024
+            x_size = round(1024*(float(x_range[1]-x_range[0])/float(y_range[1]-y_range[0])))
+        endif
+    endif else begin
+        x_size = (x_range[1]-x_range[0])
+        y_size = (y_range[1]-y_range[0])
+    endelse        
+
+    zoom_struct = { name:'zoom_struct', $
+                    aia_pix_coords:[x0, x1, y0, y1], $
+                    zoom_pix_coords:[x0new, x1new, y0new, y1new], $
+                    winsz:[x_size, y_size] }  
+
+    return, zoom_struct
+
+END
+
 ;--------------------------------------------------------------------;
 ;
 ;			 Routine to plot three-color AIA images. 
@@ -77,8 +143,7 @@ pro aia_three_color, date = date, xwin = xwin, $
 ;
 ;    CALLING SEQUENCE:
 ;    aia_three_color, date = '2014-04-01', /xwin, /hot, /zoom, im_type='ratio'
-;    aia_three_color, folder = '~/Data/2014_sep_01/sdo/', $
-;            /xwin, /hot, /zoom, im_type='ratio'
+;    aia_three_color, folder = '~/Data/2014_sep_01/sdo/', /xwin, /zoom, im_type='ratio'
 ;
 ;    INPUT:
 ;    None for the moment, but date='YYYY-MM-DD' will allow data retrieval from the ELEVATE catlogue
@@ -95,7 +160,7 @@ pro aia_three_color, date = date, xwin = xwin, $
 ;    im_type: Chose from 'ratio' for running ratio, 'nrgf' for a running ratio with 
 ;             a normalising radial gradient filter, or 'total_b' for just total brightness.
 ;    folder: specificy a folder in which the data folders '171', '193' and '211' are present.
-;    parallelise: Will process the three AIA images in parallel using IDL bridges. May or may not;
+;    parallelise: This will process the three AIA images in parallel using IDL bridges. May or may not
 ;                 speed up processing time.
 ;
 ;
@@ -134,79 +199,41 @@ pro aia_three_color, date = date, xwin = xwin, $
     if n_elements(fls_a) lt 5 or n_elements(fls_b) lt 5 or n_elements(fls_c) lt 5 then goto, files_missing
 
     array_size = 4096
-    downsize = array_size/4096.
+    downsize = 1.0
     shrink = 2.0   ;shrink image size
     if keyword_set(zoom) then begin
     
         read_sdo, fls_a[0], i_a, /nodata, only_tags='cdelt1,cdelt2,naxis1,naxis2', /mixed_comp, /noshell   
-        ;FOV = [20.0, 20.0]
-        ;CENTER = [800.0, -800.0]
-        FOV = [70., 70.];[16.0, 16.0]    ;   [10, 10]  ;[16.0, 16.0]  ;[10, 10]    ;[27.15, 27.15];
-        CENTER = [0., 0.] ;[550, -230]  ;[600.0, -220] ;[500.0, -230]  ;[600.0, -220] ; [500, -350];
         
-        arcs_per_pixx = i_a.cdelt1/downsize
-        arcs_per_pixy = i_a.cdelt2/downsize
-        naxisx = i_a.naxis1*downsize
-        naxisy = i_a.naxis1*downsize
+        FOV = [40., 40.];[16.0, 16.0]    ;   [10, 10]  ;[16.0, 16.0]  ;[10, 10]    ;[27.15, 27.15];
+        CENTER = [1300., 1300.] ;[550, -230]  ;[600.0, -220] ;[500.0, -230]  ;[600.0, -220] ; [500, -350];
+        zoom_struct = make_zoom_struct(FOV, CENTER, i_a, downsize)
 
-        x0 = (CENTER[0]/arcs_per_pixx + (naxisx/2.0)) - (FOV[0]*60.0/arcs_per_pixx)/2.0
-        x1 = (CENTER[0]/arcs_per_pixx + (naxisx/2.0)) + (FOV[0]*60.0/arcs_per_pixx)/2.0
-        y0 = (CENTER[1]/arcs_per_pixy + (naxisy/2.0)) - (FOV[1]*60.0/arcs_per_pixy)/2.0
-        y1 = (CENTER[1]/arcs_per_pixy + (naxisy/2.0)) + (FOV[1]*60.0/arcs_per_pixy)/2.0	
-        
-        ; The following if statements prevent the zoom and center from 
-        ; going outside the array area
-        if x0 lt 0.0 then begin
-        	diff = abs(x0 - 0)
-        	x1 = x1 + abs(diff)
-        	x0 = x0 > 0.0
-        	CENTER[1] = CENTER[1] + diff*arcs_per_pixx
-        endif	
-        if x1 gt array_size then begin
-        	diff = abs(x1 - array_size)
-        	x1 = x1 < (array_size-1.)
-        	x0 = (x0 - diff) > 0.0
-        	CENTER[0] = CENTER[0] - diff*arcs_per_pixx
-        endif	
-        if y0 lt 0.0 then begin
-        	diff = abs(y0 - 0)
-        	y1 = y1 + abs(diff)
-        	y0 = y0 > 0.0
-        	CENTER[1] = CENTER[1] + diff*arcs_per_pixy
-        endif	
-        if y1 gt array_size then begin
-        	diff = abs(y1 - array_size)
-        	y1 = y1 < (array_size-1.)
-        	y0 = (y0 - diff) > 0.0
-        	CENTER[1] = CENTER[1] - diff*arcs_per_pixy
-        endif	
+        x0 = zoom_struct.aia_pix_coords[0]
+        x1 = zoom_struct.aia_pix_coords[1]
+        y0 = zoom_struct.aia_pix_coords[2]
+        y1 = zoom_struct.aia_pix_coords[3]
+        new_x_size = x1 - x0 + 1
+        new_y_size = y1 - y0 + 1
+        new_array_a = fltarr(new_x_size, new_y_size)
+        new_array_b = fltarr(new_x_size, new_y_size)
+        new_array_c = fltarr(new_x_size, new_y_size)
 
-        x_range = [x0, x1]  
-        y_range = [y0, y1]    
+        x0new = zoom_struct.zoom_pix_coords[0]
+        x1new = zoom_struct.zoom_pix_coords[1]
+        y0new = zoom_struct.zoom_pix_coords[2]
+        y1new = zoom_struct.zoom_pix_coords[3]
 
-        if (x_range[1]-x_range[0]) gt 1024 or (y_range[1]-y_range[0]) gt 1024 then begin
-            if (x_range[1]-x_range[0]) ge (y_range[1]-y_range[0]) then begin
-                x_size = 1024
-                y_size = round(1024*(float(y_range[1]-y_range[0])/float(x_range[1]-x_range[0])))
-            endif
-            if (x_range[1]-x_range[0]) lt (y_range[1]-y_range[0]) then begin
-                y_size = 1024
-                x_size = round(1024*(float(x_range[1]-x_range[0])/float(y_range[1]-y_range[0])))
-            endif
-        endif else begin
-         x_size = (x_range[1]-x_range[0])
-         y_size = (y_range[1]-y_range[0])
-        endelse        
-        border = 200
+        x_size = zoom_struct.winsz[0]
+        y_size = zoom_struct.winsz[1]                
 
+        STOP
     endif else begin
-        x_range = [0,  array_size-1]
-        y_range = [0,  array_size-1]
         x_size = 1024
         y_size = 1024
-        border = 200
     endelse
 
+    border = 200
     x_size = x_size/shrink
     y_size = y_size/shrink
 
@@ -333,9 +360,9 @@ pro aia_three_color, date = date, xwin = xwin, $
     first_img_index = closest(min_tim, anytim('2014-09-01T11:02:30'))
     last_img_index = closest(min_tim, anytim('2014-09-01T11:20:00'))
 
-                    ; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
-                    ; 190 on cool AIA channels for good CME legs.
-                    ; 185 for detached EUV wave
+        ; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
+        ; 190 on cool AIA channels for good CME legs.
+        ; 185 for detached EUV wave
 
     img_num = first_img_index
     for i = first_img_index, last_img_index do begin  
@@ -397,18 +424,26 @@ pro aia_three_color, date = date, xwin = xwin, $
             abs(anytim(i_a.date_d$obs)-anytim(i_c.date_d$obs)) or $
             abs(anytim(i_b.date_d$obs)-anytim(i_c.date_d$obs))) gt 12. then goto, skip_img
 
-        truecolorim = [[[iscaled_a]], [[iscaled_b]], [[iscaled_c]]] ;contruct RGB image
+        if keyword_set(zoom) then begin
+            image_section_a = iscaled_a[(x0>0):(x1<(array_size-1)), (y0>0):(y1<(array_size-1))]
+            image_section_b = iscaled_b[(x0>0):(x1<(array_size-1)), (y0>0):(y1<(array_size-1))]
+            image_section_c = iscaled_c[(x0>0):(x1<(array_size-1)), (y0>0):(y1<(array_size-1))]
 
-        if keyword_set(zoom) then $
-        img = congrid(truecolorim[x_range[0]:x_range[1],y_range[0]:y_range[1], *], x_size, y_size, 3) else $
-           img = rebin(truecolorim, x_size, y_size, 3)
+            new_array_a[x0new:x1new, y0new:y1new] = image_section_a
+            new_array_b[x0new:x1new, y0new:y1new] = image_section_b 
+            new_array_c[x0new:x1new, y0new:y1new] = image_section_c 
+        endif else begin    
+            new_array_a = iscaled_a
+            new_array_b = iscaled_b
+            new_array_c = iscaled_c
+        endelse    
 
-            ;expand_tv, img, x_size, y_size, border/2, border/2, true = 3;, min = -3.0, max = 3.0;, origin=img_origin, scale=img_scale, /data
-            ;if keyword_set(grid) then plot_helio, i_a1[0].date_d$obs, grid=15, /over, b0=map.b0, rsun=map.rsun, l0=map.l0, gthick=thicky
+        img = [[[new_array_a]], [[new_array_b]], [[new_array_c]]] ;contruct RGB image
 
         ;---------------------------;
         ;        PLOT IMAGE
         ;---------------------------;
+
         loadct, 0, /silent
 
         if keyword_set(postscript) then $
@@ -442,7 +477,7 @@ pro aia_three_color, date = date, xwin = xwin, $
                 ; /noyticks, $
                 ; /noaxes, $
                 ;thick=1.5, $
-                color=0, $
+                color=1, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $ 
                 /normal, $
                 /noerase, $
@@ -461,12 +496,9 @@ pro aia_three_color, date = date, xwin = xwin, $
                  grid_spacing=15.0 
     
 
-            oplot_nrh_on_three_color,  i_c.date_obs             ;For the 2014-April-Event
+            ;oplot_nrh_on_three_color,  i_c.date_obs            ; For the 2014-April-Event
             ;oplot_nrh_on_three_color, '2014-04-18T12:43:47'    ;   i_c.date_obs      ;For the 2014-April-Event
-            ;oplot_nrh_on_three_color, '2014-04-18T12:35:11'    ;   For initial type III
-            ;oplot_nrh_on_three_color, '2014-04-18T12:53:55'
-            ;oplot_nrh_on_three_color, '2014-04-18T12:55:59.34'      
-            ;oplot_nrh_on_three_color, '2014-04-18T12:57:58'      
+            ;oplot_nrh_on_three_color, '2014-04-18T12:35:11'    ;   For initial type III   
 
             ;point, x, y, /data
             ;save, x, y, filename='~/Data/2014_apr_18/sdo/points_faintloop2.sav' 
@@ -475,7 +507,7 @@ pro aia_three_color, date = date, xwin = xwin, $
             ;plots, x, y, /data, psym=1, color=5, thick=8, symsize=3.0
             ;plots, x, y, /data, psym=1, color=0, thick=1.0, symsize=1.0
 
-			      ;cursor, x_pos, y_pos, /data 
+			;cursor, x_pos, y_pos, /data 
             ;if i eq first_img_index then begin
             ;	times = anytim(i_a.date_d$obs, /utim)
             ;	front_pos = [[x_pos] , [y_pos]] 
@@ -501,10 +533,8 @@ pro aia_three_color, date = date, xwin = xwin, $
             write_png, image_loc_name , img
         endif
 
-        print, img_num
         img_num = img_num + 1
 
-        ; If images too far apart in time then go to here.
         skip_img: print, 'Images too far spaced in time.'
 
         get_utc, end_loop_t, /cc
