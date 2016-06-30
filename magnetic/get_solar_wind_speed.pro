@@ -10,8 +10,8 @@ function get_solar_wind_speed, date_time
 	;date_time = '2010-08-14T12:00:00'
 	date_time_ut = anytim(date_time, /utim)
 	yyyy_mm_dd = strmid(date_time, 0, 10)
-	day_start = anytim(yyyy_mm_dd +'T00:00:00', /utim)
-	day_end = anytim(yyyy_mm_dd +'T23:59:59', /utim)
+	day_start = date_time_ut+30.0*60.0	;anytim(yyyy_mm_dd +'T00:00:00', /utim)
+	day_end = date_time_ut-30.0*60.0  ;anytim(yyyy_mm_dd +'T23:59:59', /utim)
 	yyyymm = strmid(time2file(date_time, /date_only), 0, 6)
 	ace_file = yyyymm + '_ace_swepam_1h.txt'
 	url = 'ftp://sohoftp.nascom.nasa.gov/sdb/goes/ace/monthly/'

@@ -1,5 +1,5 @@
 pro elevate_write_row, folder, row_num, num_rows, tstart, p_intensity, $     ; INPUT
-                      assoc_euv_waves, assoc_flares, assoc_cmes    ; OUTPUT
+                      assoc_euv_waves, assoc_flares, assoc_cmes, assoc_radio_bursts    ; OUTPUT
 
     ;+
     ;NAME:
@@ -82,7 +82,7 @@ pro elevate_write_row, folder, row_num, num_rows, tstart, p_intensity, $     ; I
     ;----------------Edit radio links-------------------;
     ;---------------------------------------------------;
     elevate_html_radio, row_num, tstart, em_start, template, $
-            nrh_obs_window
+            nrh_obs_window, assoc_radio_bursts
 
     ;---------------------------------------------------;
     ;------------SEPserver Particle links---------------;

@@ -2,7 +2,7 @@ pro setup_ps, name, xsize, ysize
 
     set_plot,'ps'
     !p.font=0
-    !p.charsize=1.4
+    !p.charsize=2.5
     device, filename = name, $
           ;/decomposed, $
           /color, $
@@ -36,21 +36,21 @@ pro stamp_date, i_a, i_b, i_c
    
     set_line_color
     xpos_aia_lab = 0.15
-    ypos_aia_lab = 0.78;0.155;
+    ypos_aia_lab = 0.15  ; 0.78 for top of the frame, 0.15 for bottom
 
 
     ;device, /medium     ; Done three times here to create a black background to the letters. Unfortunately charthick does not work with postscript fonts.
-    xyouts, xpos_aia_lab-0.002, ypos_aia_lab+0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0
-    xyouts, xpos_aia_lab, ypos_aia_lab+0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0
-    xyouts, xpos_aia_lab-0.001, ypos_aia_lab+0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3.0
+    xyouts, xpos_aia_lab-0.0021, ypos_aia_lab+0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0
+    xyouts, xpos_aia_lab+0.0021, ypos_aia_lab+0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0
+    xyouts, xpos_aia_lab, ypos_aia_lab+0.06, 'AIA '+string(i_a.wavelnth, format='(I03)') +' A '+anytim(i_a.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 3.0
 
-    xyouts, xpos_aia_lab-0.002, ypos_aia_lab+0.03, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0;, charthick=4
-    xyouts, xpos_aia_lab, ypos_aia_lab+0.03, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0;, charthick=4
-    xyouts, xpos_aia_lab-0.001, ypos_aia_lab+0.03, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
+    xyouts, xpos_aia_lab-0.0021, ypos_aia_lab+0.03, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0;, charthick=4
+    xyouts, xpos_aia_lab+0.0021, ypos_aia_lab+0.03, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0;, charthick=4
+    xyouts, xpos_aia_lab, ypos_aia_lab+0.03, 'AIA '+string(i_b.wavelnth, format='(I03)') +' A '+anytim(i_b.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 4
 
-    xyouts, xpos_aia_lab-0.002, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0;, charthick=4
-    xyouts, xpos_aia_lab, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0;, charthick=4
-    xyouts, xpos_aia_lab-0.001, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
+    xyouts, xpos_aia_lab-0.0021, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0;, charthick=4
+    xyouts, xpos_aia_lab+0.0021, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 0;, charthick=4
+    xyouts, xpos_aia_lab, ypos_aia_lab, 'AIA '+string(i_c.wavelnth, format='(I03)') +' A '+anytim(i_c.t_obs, /cc, /trun)+ ' UT', alignment=0, /normal, color = 10
 
 
 END
@@ -68,8 +68,8 @@ function make_zoom_struct, fov, center, hdr, downsize
     y1 = fix((center[1]/arcs_per_pixy + (naxisy/2.0)) + (fov[1]*60.0/arcs_per_pixy)/2.0)
 
     ; The following produces a new array (bigger or smaller, depending on the zoom size) in which
-    ; the original AIA frame is to be inserted. The if statements basically take care of weather or
-    ; not the new arrau is smaller or bigger than the original AIA image. This took fucking ages....
+    ; the original AIA frame is to be inserted. The if statements basically take care of whether or
+    ; not the new array is smaller or bigger than the original AIA image. This took fucking ages....
 
     new_x_size = x1 - x0 + 1
     new_y_size = y1 - y0 + 1
@@ -142,7 +142,7 @@ pro aia_three_color, date = date, xwin = xwin, $
 ;    This code plots an AIA three color image, e.g., three AIA filters in an RGB image.
 ;
 ;    CALLING SEQUENCE:
-;    aia_three_color, date = '2014-04-01', /xwin, /hot, /zoom, im_type='ratio'
+;    aia_three_color, date = '2014-04-18', /xwin, /hot, /zoom, im_type='ratio'
 ;    aia_three_color, folder = '~/Data/2014_sep_01/sdo/', /xwin, /zoom, im_type='ratio'
 ;
 ;    INPUT:
@@ -165,7 +165,7 @@ pro aia_three_color, date = date, xwin = xwin, $
 ;
 ;
 ;    HISTORY:
-;    2015: Written by Eoin Carley
+;    2015: Written partially by Eoin Carley
 ;    2016-March-23: Cleanup, Eoin Carley.  
 ;-
         
@@ -173,6 +173,7 @@ pro aia_three_color, date = date, xwin = xwin, $
     if ~keyword_set(im_type) then im_type = 'total_b' 
     if ~keyword_set(winnum) then winnum = 0        
     if keyword_set(folder) then folder = folder else folder = '~/Data/elevate_db/'+date+'/SDO/AIA'
+
 
     if keyword_set(hot) then begin
        pass_a = '094'
@@ -200,13 +201,13 @@ pro aia_three_color, date = date, xwin = xwin, $
 
     array_size = 4096
     downsize = 1.0
-    shrink = 2.0   ;shrink image size
+    shrink = 1.0   ;shrink image size
     if keyword_set(zoom) then begin
     
         read_sdo, fls_a[0], i_a, /nodata, only_tags='cdelt1,cdelt2,naxis1,naxis2', /mixed_comp, /noshell   
         
-        FOV = [40., 40.];[16.0, 16.0]    ;   [10, 10]  ;[16.0, 16.0]  ;[10, 10]    ;[27.15, 27.15];
-        CENTER = [1300., 1300.] ;[550, -230]  ;[600.0, -220] ;[500.0, -230]  ;[600.0, -220] ; [500, -350];
+        FOV = [16.0, 16.0] ;[20, 20]  ;[27.15, 27.15]    ;  [40., 40.]   ;[16.0, 16.0]    ;   [10, 10]  ;[16.0, 16.0]  ;[10, 10]    ;[27.15, 27.15];
+        CENTER = [500, -230] ;[-1100, 400]    ;[500, -350]    ;  [-900., 0.] ;[550, -230]  ;[600.0, -220] ;[500.0, -230]  ;[600.0, -220] ; 
         zoom_struct = make_zoom_struct(FOV, CENTER, i_a, downsize)
 
         x0 = zoom_struct.aia_pix_coords[0]
@@ -227,13 +228,12 @@ pro aia_three_color, date = date, xwin = xwin, $
         x_size = zoom_struct.winsz[0]
         y_size = zoom_struct.winsz[1]                
 
-        STOP
     endif else begin
         x_size = 1024
         y_size = 1024
     endelse
 
-    border = 200
+    border = 400
     x_size = x_size/shrink
     y_size = y_size/shrink
 
@@ -353,12 +353,12 @@ pro aia_three_color, date = date, xwin = xwin, $
 
     ;-------------------------------------------------;
     ;        *********************************
-    ;            Image Loop starts here
+    ;             Image Loop starts here
     ;        *********************************
     ;-------------------------------------------------;
 
-    first_img_index = closest(min_tim, anytim('2014-09-01T11:02:30'))
-    last_img_index = closest(min_tim, anytim('2014-09-01T11:20:00'))
+    first_img_index = closest(min_tim, anytim('2014-04-18T12:43:26', /utim))
+    last_img_index = closest(min_tim, anytim('2014-04-18T13:15:00', /utim))
 
         ; 161 for type III image of initial flare. 188 for type IIIs. For 2014-Apr-18 Event. 
         ; 190 on cool AIA channels for good CME legs.
@@ -371,7 +371,7 @@ pro aia_three_color, date = date, xwin = xwin, $
 
         IF keyword_set(parallelise) THEN BEGIN
             ;---------- Run processing of three images in parallel using IDL bridges -------------;
-            pref_set, 'IDL_STARTUP', '/Users/eoincarley/idl/.idlstartup',/commit             
+            pref_set, 'IDL_STARTUP', '/Users/eoincarley/idl/.idlstartup', /commit             
             oBridge1 = OBJ_NEW('IDL_IDLBridge', output='/Users/eoincarley/child1_output.txt') 
             oBridge1->EXECUTE, '@' + PREF_GET('IDL_STARTUP')   ;Necessary to define startup file because child process has no memory of ssw_path of parent process
             oBridge1->SetVar, 'fls_211', fls_211
@@ -429,6 +429,10 @@ pro aia_three_color, date = date, xwin = xwin, $
             image_section_b = iscaled_b[(x0>0):(x1<(array_size-1)), (y0>0):(y1<(array_size-1))]
             image_section_c = iscaled_c[(x0>0):(x1<(array_size-1)), (y0>0):(y1<(array_size-1))]
 
+            new_array_a[*] = mean(iscaled_a)
+            new_array_b[*] = mean(iscaled_b)
+            new_array_c[*] = mean(iscaled_c)
+
             new_array_a[x0new:x1new, y0new:y1new] = image_section_a
             new_array_b[x0new:x1new, y0new:y1new] = image_section_b 
             new_array_c[x0new:x1new, y0new:y1new] = image_section_c 
@@ -447,9 +451,9 @@ pro aia_three_color, date = date, xwin = xwin, $
         loadct, 0, /silent
 
         if keyword_set(postscript) then $
-            setup_ps, '~/Data/2014_sep_01/combos/image_'+string(img_num-first_img_index, format='(I03)' )+'.eps', x_size+border, y_size+border
+            setup_ps, '~/Data/2014_apr_18/combos/test_typeIII_above.eps', x_size+border, y_size+border ;image_'+string(img_num-first_img_index, format='(I03)' )+'.eps', x_size+border, y_size+border
 
-            plot_image, img, true=3, $
+            plot_image, img[*,*,*], true=3, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $
                 /normal, $
                 xticklen=-0.001, $
@@ -477,7 +481,7 @@ pro aia_three_color, date = date, xwin = xwin, $
                 ; /noyticks, $
                 ; /noaxes, $
                 ;thick=1.5, $
-                color=1, $
+                color=0, $
                 position = [border/2, border/2, x_size+border/2, y_size+border/2]/(x_size+border), $ 
                 /normal, $
                 /noerase, $
@@ -495,8 +499,8 @@ pro aia_three_color, date = date, xwin = xwin, $
                  gcolor=1, $
                  grid_spacing=15.0 
     
-
-            ;oplot_nrh_on_three_color,  i_c.date_obs            ; For the 2014-April-Event
+            ;nrh_src_pos_20140901     
+            oplot_nrh_on_three_color,  i_c.date_obs;, /freq_tags;, /back_sub            ; For the 2014-April-Event
             ;oplot_nrh_on_three_color, '2014-04-18T12:43:47'    ;   i_c.date_obs      ;For the 2014-April-Event
             ;oplot_nrh_on_three_color, '2014-04-18T12:35:11'    ;   For initial type III   
 
@@ -504,10 +508,10 @@ pro aia_three_color, date = date, xwin = xwin, $
             ;save, x, y, filename='~/Data/2014_apr_18/sdo/points_faintloop2.sav' 
             ;dam_orfees_plot_gen, time_marker=anytim(i_c.date_obs, /utim)
             ;restore,'~/Data/2014_apr_18/sdo/points_faintloop2.sav' 
-            ;plots, x, y, /data, psym=1, color=5, thick=8, symsize=3.0
-            ;plots, x, y, /data, psym=1, color=0, thick=1.0, symsize=1.0
+            ;plots, x, y, /data, psym=1, color=5, thick=16, symsize=3.0
+            ;plots, x, y, /data, psym=1, color=1, thick=6.0, symsize=2.0
 
-			;cursor, x_pos, y_pos, /data 
+			      ;cursor, x_pos, y_pos, /data 
             ;if i eq first_img_index then begin
             ;	times = anytim(i_a.date_d$obs, /utim)
             ;	front_pos = [[x_pos] , [y_pos]] 
@@ -522,7 +526,7 @@ pro aia_three_color, date = date, xwin = xwin, $
             device, /close
             set_plot, 'x'
         endif    
-
+STOP
         cd, folder  ;change back to aia folder
         
         if keyword_set(xwin) then x2png, folder + '/image_'+string(img_num-first_img_index, format='(I03)' )+'.png'
@@ -543,7 +547,6 @@ pro aia_three_color, date = date, xwin = xwin, $
         print,'Currently '+string(loop_time, format='(I04)')+' seconds per 3 color image.'
         print,'-------------------'
 
-STOP      
     endfor
 
     ;front_pos = transpose(front_pos)

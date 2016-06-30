@@ -8,8 +8,8 @@ pro manual_detection, date, ints, average_window, tonset, $
 	cursor, t_zoom_point, i_zoom_point, /data
 
 	; Choose 1 hr around this window.
-	t0_zoom	= t_zoom_point - 2.0*60.*60.
-	t1_zoom	= t_zoom_point + 5.0*60.*60.
+	t0_zoom	= t_zoom_point - 1.0*60.*60.;2.0*60.*60.
+	t1_zoom	= t_zoom_point + 0.5*60.*60.;5.0*60.*60.
 	xzoom = [t0_zoom, t1_zoom]
 
 	i0_zoom = i_zoom_point - i_zoom_point*0.25
@@ -32,11 +32,14 @@ pro manual_detection, date, ints, average_window, tonset, $
 
 	set_line_color
 	plots, date_zoom, i_mean, color=3
-	plots, date_zoom, i_mean + 3.0*i_stdv, linestyle=3, color=5
+	plots, date_zoom, i_mean + 2.0*i_stdv, linestyle=3, color=5
 	
+	;point, x, y, /data
+	;print, (x[1]-x[0])/60.0
+
 	print, 'Choose onset: '
 	cursor, tonset, i_junk, /data
-
+	;tonset=x[1]
 	print, 'Onset time: ' + anytim(tonset, /cc)
 
 END
@@ -137,7 +140,7 @@ pro cusum_detection, date, ints, average_window, $
 
 	mu_a = mean( ints_sub )
 	sig_a = stdev( ints_sub ) ;> 0.05*mu_a 	
-	mu_d = mu_a + 2.0*sig_a
+	mu_d = mu_a + 3.0*sig_a
 	k = (mu_d - mu_a)/(alog(mu_d) - alog(mu_a))
 	if k gt 1.0 then h=1.0
 	if k le 1.0 then h=2.0
@@ -220,7 +223,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	!p.charsize = 1.5
 	event_folder = '/Users/eoincarley/ELEVATE/data/' +date_folder+ '/'
 	ace_folder = event_folder + 'ACE/'
-	soho_folder = event_folder + '/ERNE/'
+	soho_folder = event_folder + '/SOHO/ERNE/'
 
 	yrange = '[1e-4, 1e4]'		; To be used in case that CUSUM method is chosen and particle counts are used.		 
 
@@ -325,9 +328,9 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		chan_energies = ace_ps[p_index]
 		instrument = 'ACE EPAM ELECTRONS'
 		particle_type = 'electron'
-		smooth_param = param_struct.smooth_param ;5
+		smooth_param = 3.0;param_struct.smooth_param ;5
 		average_window = param_struct.average_window ;120.0
-		detection_time_err = 5.0 	; minutes
+		detection_time_err = 2.0 	; minutes
 
 		;param_struct = {name:instrument, date:particle_date[0], smooth_param:smooth_param, average_window:average_window}
 		;save, param_struct, filename=ace_folder+'params_for_vda.sav', description = 'Paramaeters used in the VDA of for this event'
@@ -348,7 +351,6 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		smooth_param = 1
 		average_window = 480.0
 		detection_time_err = 5.0 	; minutes
-
 
 	endif
 
@@ -478,6 +480,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 	travel_dist = p[0]/day_frac_lt
 	dist_string = +string(travel_dist, format = '(f4.2)')
 
+	;perror = perror*SQRT(bestnorm / dof)	
 	t0_error = perror[1]*(24.0*60.) ; Release time error in minutes
 	s_error = perror[0]/day_frac_lt
 	

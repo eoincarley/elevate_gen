@@ -10,7 +10,7 @@ pro elevate_build_html_table, filename, folder
     ;
     ;
     ;PURPOSE:
-    ;   This routine generates all the elements of each row in the ELEVATe table on
+    ;   This routine generates all the elements of each row in the ELEVATE table on
     ;   http://www.maths.tcd.ie/~eoincarley/index.php?table=EARTH. It starts with the 
     ;   times of events listed in the SEPserver catalogue then uses these to find 
     ;   coronal activity associated with the SEP events from various catalogue. If 
@@ -20,13 +20,13 @@ pro elevate_build_html_table, filename, folder
     ;   ssh eoincarley@salmon.maths.tcd.ie
     ;
     ;CALLING SEQUENCE:
-    ;      elevate_build_html_table, 'soho_onset.txt', 'soho-erne'
+    ;      elevate_build_html_table, '~/ELEVATE/data/SEPserver/soho_onset.txt', 'soho-erne'
     ;      calls elevate_write_row.pro
     ;
     ;
     ;INPUT:
     ;       filename: Text file of SEP onset times. For example, from SOHO ERNE.
-    ;                   soho_erne.txt stored in ~/ELEVATE/data/SEPserver
+    ;                   soho_onset.txt stored in ~/ELEVATE/data/SEPserver
     ;       folder: Folder containing the written html files.
     ;
     ;KEYWORDS:
@@ -47,25 +47,32 @@ pro elevate_build_html_table, filename, folder
     num_rows = n_elements(t_onset)
     php_incl = strarr(n_elements(t_onset))
 
-    FOR i = n_elements(t_onset)-1, 0, -1 DO BEGIN  ;reverse loop to have latest events at the top of the table
+    indices = reverse(indgen(n_elements(t_onset)))
+
+    FOR i=0, n_elements(indices)-1 DO BEGIN  ;reverse loop to have latest events at the top of the table
+
+        index = indices[i]
 
         elevate_write_row, folder, $            ; INPUT
                 row_num, $
                 num_rows, $
-                t_onset[i], $
+                t_onset[index], $
                 p_intensity, $
-                assoc_wave_times, $     ; OUTPUT
+                assoc_wave_times, $             ; OUTPUT
                 output_flare_data, $
-                cme_list
+                cme_list, $
+                assoc_radio_bursts
         
-        php_incl[i] = "<?php include('"+folder+"/row_"+string(row_num, format='(I03)')+ ".html'); ?>"
+        php_incl[index] = "<?php include('"+folder+"/row_"+string(row_num, format='(I03)')+ ".html'); ?>"
         
         row_num = row_num + 1
+        print, index
         
     ENDFOR   
 
-  save, cme_list, filename='~/ELEVATE/data/elevate_cactus_cmes.sav'
+  save, cme_list, filename='~/ELEVATE/data/assoc_cme_data.sav'
   save, assoc_wave_times, filename = '~/ELEVATE/data/assoc_wave_times.sav'
+  save, assoc_radio_bursts, filename = '~/ELEVATE/data/assoc_swpc_radio_bursts.sav'
 
   index = where(php_incl ne '')
   print, transpose(php_incl[index])     ; Simply the php include statement of the row names. 

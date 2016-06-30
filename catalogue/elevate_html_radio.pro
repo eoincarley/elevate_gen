@@ -24,7 +24,7 @@ pro nrh_sun_ephemeris, tstart, $
 END
 
 pro elevate_html_radio, row_num, tstart, em_start, template, $
-                    nrh_obs_window
+                    nrh_obs_window, radio_burst_list
 
  	nrh_sun_ephemeris, tstart, $
      	nrh_tstart, nrh_tend
@@ -68,5 +68,37 @@ pro elevate_html_radio, row_num, tstart, em_start, template, $
         template[irow+1] = strmid(template[irow+1], 0, ind_date+len) + YY + date + 'spectrograph.gif")>Culgoora</a><br>'
     ENDIF
 
+    ;------------------------------------------;
+    ;           Search radio bursts            ;
+    ;                                          ;
+    get_radio_burst_info, em_start, 80.0, 'RSP', assoc_radio_events=assoc_radio_events
+    event_folder = '~/ELEVATE/data/'+anytim(em_start, /cc, /date)
+    date_string  = time2file(em_start, /date)
+    if row_num eq 1 then begin
+        radio_burst_list = [assoc_radio_events]
+    endif else begin
+        radio_burst_list = [ [radio_burst_list], [assoc_radio_events] ]
+    endelse
+    radio_types = ''
+    types = strtrim(assoc_radio_events[9, *], 2)
+    if ISA(strsplit(types, '/', /extract), 'LIST') then begin
+    	types = (strsplit(types, '/', /extract)).toarray() 
+    	types = types[*, 0]
+    endif else begin
+    	types = strsplit(types, '/', /extract) ; NOAA SWPC places a /1, /2 or /3 after the radio burst type to indicate significance of the burst. This removes it.
+    	types = types[0]
+    endelse	
+
+    types = types[ uniq(types, sort(types)) ]
+    foreach elem, types do radio_types = radio_types+strtrim(elem, 2)+' '
+    irow = where(strtrim(template,1) eq "<!--Burst-Types-->")  
+    template[irow+1] = radio_types
+
+    irow = where(strtrim(template,1) eq "<!--SWPC-Events-->")  
+    yyyy = strmid(time2file(tstart[0], /date_only), 0, 4)
+    ind_date = stregex(template[irow+1], 'noaa_events/', length=len)   
+    template[irow+1] = strmid(template[irow+1], 0, ind_date+len) +  yyyy + '_events/'+date_string+'events.txt")>SWPC events</a><br>'
+ 
+    if em_start gt anytim('2010-08-14T00:00:00', /utim) then event_info_to_text, event_folder, date_string, 'radio_types', [radio_types]
 
 END
