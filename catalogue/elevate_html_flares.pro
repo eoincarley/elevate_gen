@@ -3,6 +3,10 @@ pro elevate_html_flares, row_num, tstart, em_start, template,  $
 
 	; Prodecure used by elevate_write_row to search for closest flare to em_start
 
+    ;------------------------------------------;
+    ;  Search for the closest flare to the EM 
+    ;  start time (~90 minutes before the 55 
+    ;  MeV proton onset.)
     flares = hsi_read_flarelist()
     start_times = flares.start_time
     closest_flare = closest(start_times, em_start)
@@ -10,10 +14,15 @@ pro elevate_html_flares, row_num, tstart, em_start, template,  $
     goes_class = cand_flare.goes_class
     hsi_flare_time = cand_flare.start_time
     ;active_region = cand_flare.active_region
+
+    ;-----------------------------------------;
+    ;   Search for links to the flare 
+    ;   on the LMSAL archive.
     flare_date = anytim(hsi_flare_time, /ecs, /date_only)
     gev_name = strmid('gev_'+time2file(hsi_flare_time), 0, 17)
     gev_link = 'http://www.lmsal.com/solarsoft/latest_events_archive/events_summary/'+flare_date+'/';+gev_name
     sock_list, gev_link, gev_html
+    
     if gev_html[0] ne '' and n_elements(gev_html) lt 100 then begin 
         gev_html = gev_html[where(strmid(gev_html, 0, 19) eq '   <tr class="even"' or strmid(gev_html, 0, 18) eq '   <tr class="odd"')]
         gev_html = gev_html[1:n_elements(gev_html)-1]
@@ -32,9 +41,13 @@ pro elevate_html_flares, row_num, tstart, em_start, template,  $
             gev_link = 'http://www.lmsal.com/solarsoft/latest_events_archive/events_summary/'+flare_date+'/'
             flare_time_stamp = ''
         endif else begin
-            gev_name = gev_names[gev_flare_index] 
+            gev_name = gev_names[gev_flare_index]       ; The closest flare to the em_start time.
             gev_link = 'http://www.lmsal.com/solarsoft/latest_events_archive/events_summary/'+flare_date+'/'+gev_name
             sock_list, gev_link, gev_flare_html
+            
+            ;-------------------------------------------------;
+            ;       Various parsings of the LMSAL links.
+            ;
             goes_class = strmid(gev_flare_html[where(stregex(gev_flare_html, '<th>GOES*') eq 0) + 7], 4, 4)
             ar_html = gev_flare_html[where(stregex(gev_flare_html, '<th>GOES*') eq 0) +8]
             if strlen(ar_html) gt 25 then gev_location = strmid(ar_html, stregex(ar_html, '</a>')-6, 6) else gev_location = strmid(ar_html, 4, 6)

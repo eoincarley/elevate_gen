@@ -24,7 +24,7 @@ pro nrh_sun_ephemeris, tstart, $
 END
 
 pro elevate_html_radio, row_num, tstart, em_start, template, $
-                    nrh_obs_window, radio_burst_list
+                    nrh_obs_window, swpc_radio_burst_list
 
  	nrh_sun_ephemeris, tstart, $
      	nrh_tstart, nrh_tend
@@ -71,16 +71,19 @@ pro elevate_html_radio, row_num, tstart, em_start, template, $
     ;------------------------------------------;
     ;           Search radio bursts            ;
     ;                                          ;
-    get_radio_burst_info, em_start, 80.0, 'RSP', assoc_radio_events=assoc_radio_events
+    get_swpc_radio_burst_info, em_start, 120.0, 'RSP', assoc_radio_events=assoc_swpc_radio_bursts
     event_folder = '~/ELEVATE/data/'+anytim(em_start, /cc, /date)
     date_string  = time2file(em_start, /date)
+    separator = strarr(12)
+    separator[*] = '---'
     if row_num eq 1 then begin
-        radio_burst_list = [assoc_radio_events]
-    endif else begin
-        radio_burst_list = [ [radio_burst_list], [assoc_radio_events] ]
+        swpc_radio_burst_list = [assoc_swpc_radio_bursts]
+    endif else begin   
+        assoc_swpc_radio_bursts = [[assoc_swpc_radio_bursts], [separator]]
+        swpc_radio_burst_list = [ [swpc_radio_burst_list], [assoc_swpc_radio_bursts] ]
     endelse
     radio_types = ''
-    types = strtrim(assoc_radio_events[9, *], 2)
+    types = strtrim(assoc_swpc_radio_bursts[9, *], 2)
     if ISA(strsplit(types, '/', /extract), 'LIST') then begin
     	types = (strsplit(types, '/', /extract)).toarray() 
     	types = types[*, 0]

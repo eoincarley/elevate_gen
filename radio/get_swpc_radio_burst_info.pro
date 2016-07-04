@@ -52,7 +52,7 @@ function parse_noaa_events, file
 	return, all_rows
 END
 
-pro get_radio_burst_info, time, trange, radio_type, $
+pro get_swpc_radio_burst_info, time, trange, radio_type, $
 				assoc_radio_events=assoc_radio_events
 
 	;
@@ -64,6 +64,7 @@ pro get_radio_burst_info, time, trange, radio_type, $
 	; Calling sequence: get_radio_burst_info, '2010-01-04T22:00:00', 30.0, 'RSP'
 
 	; There's also numerous event lists here: http://soleil.i4ds.ch/solarradio/
+	; WIND/WAVES type II burst lists: http://cdaw.gsfc.nasa.gov/CME_list/radio/waves_type2.html
 	;
 
 	time_ut = anytim(time, /utim)

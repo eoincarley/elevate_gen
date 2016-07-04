@@ -1,5 +1,5 @@
 pro elevate_write_row, folder, row_num, num_rows, tstart, p_intensity, $     ; INPUT
-                      assoc_euv_waves, assoc_flares, assoc_cmes, assoc_radio_bursts    ; OUTPUT
+                      assoc_euv_waves, assoc_flares, assoc_cmes, assoc_swpc_radio_bursts    ; OUTPUT
 
     ;+
     ;NAME:
@@ -38,7 +38,9 @@ pro elevate_write_row, folder, row_num, num_rows, tstart, p_intensity, $     ; I
     ;     2016-March-23: Cleanup, Eoin Carley.  
     ;-                  
 
-    em_start = anytim(tstart, /utim) - 60.0*60.0*1.0 + 8.0*60.0    ; 1hr before particle onset, plus 8 minute light travel time.
+    ; SEPserver list is based on the arrival times of 55-80 MeV protons. Time taken for 55 MeV (0.1 c) protons to travel 1.2 A.U (parkers)
+    ; spiral length for 400 km/s solar wind) is 90 minutes. Nunez lists 1hr 5min travel time for 10 MeV protons for well connected events
+    em_start = anytim(tstart, /utim) - 60.0*60.0*1.0 + 8.0*60.0    ; 1.0hr before particle onset, plus 8 minute light travel time.
     sep_row = num_rows - (row_num)
     pinten = p_intensity[sep_row]
 
@@ -77,12 +79,11 @@ pro elevate_write_row, folder, row_num, num_rows, tstart, p_intensity, $     ; I
     elevate_html_flares, row_num, tstart, em_start, template, $
             assoc_flares
 
-   
     ;---------------------------------------------------;
     ;----------------Edit radio links-------------------;
     ;---------------------------------------------------;
     elevate_html_radio, row_num, tstart, em_start, template, $
-            nrh_obs_window, assoc_radio_bursts
+            nrh_obs_window, assoc_swpc_radio_bursts
 
     ;---------------------------------------------------;
     ;------------SEPserver Particle links---------------;

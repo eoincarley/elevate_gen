@@ -50,7 +50,7 @@ pro mag_syn_map_process, date
 		;		Determine open field colours
 		mag_determine_color, date, rix, theta, nstep, ptr, ptth, ptph, lat, lon, br
 		;------------------------------------
-STOP
+
 		rad = ptr
 		lat = 90.0 - ptth*!radeg
 		lon = (ptph)*!radeg + 180.0

@@ -47,9 +47,9 @@ pro elevate_build_html_table, filename, folder
     num_rows = n_elements(t_onset)
     php_incl = strarr(n_elements(t_onset))
 
-    indices = reverse(indgen(n_elements(t_onset)))
+    indices = reverse(indgen(n_elements(t_onset)))  ; Reverse so that latest events are top of page.
 
-    FOR i=0, n_elements(indices)-1 DO BEGIN  ;reverse loop to have latest events at the top of the table
+    FOR i=0, n_elements(indices)-1 DO BEGIN  
 
         index = indices[i]
 
@@ -61,7 +61,7 @@ pro elevate_build_html_table, filename, folder
                 assoc_wave_times, $             ; OUTPUT
                 output_flare_data, $
                 cme_list, $
-                assoc_radio_bursts
+                assoc_swpc_radio_bursts
         
         php_incl[index] = "<?php include('"+folder+"/row_"+string(row_num, format='(I03)')+ ".html'); ?>"
         
@@ -71,8 +71,9 @@ pro elevate_build_html_table, filename, folder
     ENDFOR   
 
   save, cme_list, filename='~/ELEVATE/data/assoc_cme_data.sav'
+  save, output_flare_data, filename = '~/ELEVATE/data/assoc_flare_data.sav'
   save, assoc_wave_times, filename = '~/ELEVATE/data/assoc_wave_times.sav'
-  save, assoc_radio_bursts, filename = '~/ELEVATE/data/assoc_swpc_radio_bursts.sav'
+  save, assoc_swpc_radio_bursts, filename = '~/ELEVATE/data/assoc_swpc_radio_bursts.sav'
 
   index = where(php_incl ne '')
   print, transpose(php_incl[index])     ; Simply the php include statement of the row names. 
