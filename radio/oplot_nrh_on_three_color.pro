@@ -77,7 +77,7 @@ pro oplot_nrh_on_three_color, tstart, freq_tags=freq_tags, back_sub=back_sub
 			;/noxticks, $
 			;/noyticks, $
 			/noaxes, $
-			thick=14, $
+			thick=4, $ ;14, $
 			color=1
 
 		if j eq 0 then plot_helio, nrh_hdr.date_obs, $
@@ -96,7 +96,7 @@ pro oplot_nrh_on_three_color, tstart, freq_tags=freq_tags, back_sub=back_sub
 			/noxticks, $
 			/noyticks, $
 			/noaxes, $
-			thick=12, $
+			thick=2, $;12, $
 			color=colors[j]					 
 
 		print, 	'NRH time: '+anytim(nrh_hdr.date_obs, /cc)+' UT'

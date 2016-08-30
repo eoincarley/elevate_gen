@@ -122,7 +122,7 @@ pro cusum_detection, date, ints, average_window, $
 	; Outlined in Huttunen-Heikinmaa et al. (2005)
 
 	set_line_color
-	minutes = average_window	; 7 hours of data
+	minutes = average_window	; 
 
 	junk = execute(plot_sep)
 	tcenter = date[0]
@@ -140,7 +140,7 @@ pro cusum_detection, date, ints, average_window, $
 
 	mu_a = mean( ints_sub )
 	sig_a = stdev( ints_sub ) ;> 0.05*mu_a 	
-	mu_d = mu_a + 3.0*sig_a
+	mu_d = mu_a + 2.0*sig_a
 	k = (mu_d - mu_a)/(alog(mu_d) - alog(mu_a))
 	if k gt 1.0 then h=1.0
 	if k le 1.0 then h=2.0
@@ -154,7 +154,7 @@ pro cusum_detection, date, ints, average_window, $
 		sum = max([0, ints[j+1] - k + sum])
 		
 		plots, date[j], [sum], /data, psym=1, symsize=1, color=7
-		
+
 		if sum ge h then begin
 			pass = [pass, 1] 
 		endif else begin
@@ -324,18 +324,19 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		chan_start = 0
 		chan_end = 2
 		chan_step = 1
-		chan_name = 0	;for indexing erne_energies
-		chan_energies = ace_ps[p_index]
+		chan_name = 0	
+		chan_energies = ace_e_energies
 		instrument = 'ACE EPAM ELECTRONS'
 		particle_type = 'electron'
 		smooth_param = 3.0;param_struct.smooth_param ;5
 		average_window = param_struct.average_window ;120.0
-		detection_time_err = 2.0 	; minutes
+		detection_time_err = 5.0 	; minutes
 
 		;param_struct = {name:instrument, date:particle_date[0], smooth_param:smooth_param, average_window:average_window}
 		;save, param_struct, filename=ace_folder+'params_for_vda.sav', description = 'Paramaeters used in the VDA of for this event'
 
 	endif	
+
 
 	if keyword_set(epam_p) then begin	
 
@@ -344,7 +345,7 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 		chan_start = 6
 		chan_end = 10
 		chan_step = 1
-		chan_name = 0	;for indexing erne_energies
+		chan_name = 0	
 		chan_energies = ace_ps[p_index]
 		instrument = 'ACE EPAM PROTONS'
 		particle_type = 'proton'
@@ -368,7 +369,6 @@ pro velocity_dispersion, date_folder, erne = erne, epam_p = epam_p, epam_e = epa
 			nels = n_elements(date)
 
 			junk = execute(plot_sep)
-		
 			xyouts, date[nels-1] +60.0*2.0, ints[nels-1], chan_energies[chan_name] + ' MeV', /data
 
 			;----------------------------------------------------------;
